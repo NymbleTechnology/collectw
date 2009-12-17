@@ -22,9 +22,11 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include<sys/stat.h>
+#include<unistd.h>
 #include<dirent.h>
+#define __USE_XOPEN
+#include<time.h>
 #include<rrd.h>
 
 #include"collectw.h"
@@ -134,6 +136,69 @@ int collectw_info(Stream stream, const char **param){
   return _collectw_info(stream, collectw_rrd_basedir);
 }
 
-int collectw_data(Stream stream, const char **param){
+static int _collectw_data(Stream stream,
+			  const char *path,
+			  const char *ds,
+			  const char *type,
+			  time_t *start,
+			  time_t *end,
+			  unsigned long *step){
+  unsigned long ds_cnt=0, l, n, i;
+  char **ds_name, k=0;
+  rrd_value_t *data;
   
+  if(rrd_fetch_r(path, type, start, end, step, &ds_cnt, &ds_name, &data))return 2;
+  
+  l=(*end-*start) / *step;
+  
+  FPrintF(stream, "{");
+  for(i=0;i<ds_cnt;i++) {
+    if(ds && strlen(ds) && !strstr(ds, ds_name[i])){
+      free(ds_name[i]);
+      continue;
+    }
+    
+    k && FPrintF(stream, ","); k=1;
+    FPrintF(stream, "%s:[", ds_name[i]);
+    
+    for(n=0;n<l;n++){
+      n && FPrintF(stream, ",");
+      FPrintF(stream, "%f", data[n*ds_cnt+i]);
+    }
+    
+    FPrintF(stream, "]");
+    
+    free(ds_name[i]);
+  }
+  FPrintF(stream, "}");
+  
+  free(ds_name);
+  free(data);
+  
+  return 0;
+}
+
+#define TIME_FMT "%Y-%m-%d %H:%M:%S"
+#define ERROR(message) {FPrintF(stream, "{status:false,message:'%s'}", message);return 3;}
+
+int collectw_data(Stream stream, const char **param){
+  unsigned long step=1;
+  const char *prs;
+  struct tm t;
+  time_t start, end;
+  
+  if(!param[0] || !strlen(param[0]))ERROR("Path is empty!");
+  if(!param[1] || !strlen(param[1]))ERROR("Type is empty!");
+  
+  if(!param[3] || !strlen(param[3]))ERROR("Start time is empty!");
+  prs=strptime(param[3], TIME_FMT, &t);
+  if(!prs || prs==param[3])ERROR("Start time incorrect!");
+  start=mktime(&t);
+  
+  if(!param[4] || !strlen(param[4]))ERROR("End time is empty!");
+  prs=strptime(param[4], TIME_FMT, &t);
+  if(!prs || prs==param[4])ERROR("End time incorrect!");
+  start=mktime(&t);
+  
+  return _collectw_data(stream, param[0], param[1], param[2], &start, &end, &step);
 }
