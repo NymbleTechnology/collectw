@@ -1,0 +1,11 @@
+CollectW - Asynchronous WebUI for CollectD by Phoenix Kayo (C) 2009
+
+Usage:
+	collectw [options]
+
+Options:
+	-h|--help			This help.
+	-l|--fcgx-listen=:port|socket	Listen settings for FastCGI SAPI. Default: \" SAPI_FCGX_LISTEN \"
+	-b|--rrd-basedir=path		Path to collectd rrd datas. Default: \" COLLECTW_RRD_BASEDIR \"
+	-c|--user-config=file		Config file with settings. Default: \" COLLECTW_USER_CONFIG \"
+
