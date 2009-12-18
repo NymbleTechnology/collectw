@@ -25,10 +25,22 @@
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
+#include<signal.h>
+#include<setjmp.h>
 #include<getopt.h>
 #include<regex.h>
 
 #define TRY(code) if(code){fprintf(stderr,"Fatal error: " #code ".. Exiting..\n");exit(3);}
+
+//static char run=0;
+jmp_buf jmp_mark;
+
+void
+term(int i){
+  fprintf(stderr, "Terminating..\n");
+  //run=0;
+  longjmp(jmp_mark, 1);
+}
 
 help(){
   printf(COLLECTW_FCGX_HELP "\n");
@@ -113,62 +125,77 @@ main(int argc, char **argv){
   TRY( FCGX_InitRequest(&request, socket, 0) );
   
   /* Init main cicle */
-  fprintf(stderr, "Running main cicle..\n");
   {
+    struct sigaction sa;
+    sigset_t sigset;
+    
     regmatch_t match[max_n];
     unsigned char n,l;
     char *param[max_n];
     
     for(n=0;n<max_n;n++)param[n]=NULL;
     
-    for (;;) {
-      TRY( FCGX_Accept_r(&request) );
-      query=FCGX_GetParam("QUERY_STRING", request.envp);
-      //FPrintF(request.out, "Content-Type: application/json; charset=utf-8\r\n");
-      FPrintF(request.out, "Content-Type: text/plain; charset=utf-8\r\n");
-      //FPrintF(request.out, "X-JSON: ['ok']\r\n");
-      FPrintF(request.out, "\r\n");
-      if(query){
+    /* Signal handling */
+    sigemptyset(&sigset);
+    //sigaddset(&sigset, SIGHUP);
+    sigaddset(&sigset, SIGINT);
+    //sigaddset(&sigset, SIGTERM);
+    sigemptyset(&sa.sa_mask);
+    sa.sa_handler=term;
+    sigaction(SIGINT, &sa, 0);
+    
+    if(!setjmp(jmp_mark)){
+      fprintf(stderr, "Running main cicle..\n");
+      for(;;){
+	TRY( FCGX_Accept_r(&request) );
+	query=FCGX_GetParam("QUERY_STRING", request.envp);
+	//FPrintF(request.out, "Content-Type: application/json; charset=utf-8\r\n");
+	FPrintF(request.out, "Content-Type: text/plain; charset=utf-8\r\n");
+	//FPrintF(request.out, "X-JSON: ['ok']\r\n");
+	FPrintF(request.out, "\r\n");
+	if(query){
+	  fprintf(stderr, "Processing query: %s ..\n", query);
 #ifdef DEBUG
-	// url schema: collectw?env
-	if(strstr(query, "env")){
-	  for(i=0;request.envp[i];i++){
-	    FPrintF(request.out, "%s\r\n", request.envp[i]);
-	  }
-	}else{
+	  // url schema: collectw?env
+	  if(strstr(query, "env")){
+	    for(i=0;request.envp[i];i++){
+	      FPrintF(request.out, "%s\r\n", request.envp[i]);
+	    }
+	  }else{
 #endif
-	  for(i=0;reque[i].re;i++){
-	    if(!reque[i].cb)continue;
-	    if(REG_NOMATCH==regexec(reque[i].pg, query, max_n, match, 0))continue;
-	    
-	    /* Fill params */
-	    for(n=0;n<reque[i].rs[n];n++){
-	      if(match[n].rm_so>0 && reque[i].rs[n]!='~'){
-		l=match[n].rm_eo-match[n].rm_so;
-		param[reque[i].rs[n]]=malloc(l+1);
-		strncpy(param[reque[i].rs[n]], query+match[n].rm_so, l);
-		param[reque[i].rs[n]][l]='\0';
+	    for(i=0;reque[i].re;i++){
+	      if(!reque[i].cb)continue;
+	      if(REG_NOMATCH==regexec(reque[i].pg, query, max_n, match, 0))continue;
+	      
+	      /* Fill params */
+	      for(n=0;n<reque[i].rs[n];n++){
+		if(match[n].rm_so>0 && reque[i].rs[n]!='~'){
+		  l=match[n].rm_eo-match[n].rm_so;
+		  param[reque[i].rs[n]]=malloc(l+1);
+		  strncpy(param[reque[i].rs[n]], query+match[n].rm_so, l);
+		  param[reque[i].rs[n]][l]='\0';
+		}
 	      }
+	      
+	      /* Call handler */
+	      reque[i].cb(request.out, (const char **)param);
+	      
+	      /* Clear params */
+	      for(n=0;n<reque[i].rs[n];n++){
+		if(param[n])free(param[n]);
+		param[n]=NULL;
+	      }
+	      
+	      break;
 	    }
-	    
-	    /* Call handler */
-	    reque[i].cb(request.out, (const char **)param);
-	    
-	    /* Clear params */
-	    for(n=0;n<reque[i].rs[n];n++){
-	      if(param[n])free(param[n]);
-	      param[n]=NULL;
-	    }
-	    
-	    break;
-	  }
 #ifdef DEBUG
-	}
+	  }
 #endif
+	}
+	
+	FPrintF(request.out, "\r\n");
+	FCGX_Finish_r(&request);
       }
-      
-      FPrintF(request.out, "\r\n");
-      FCGX_Finish_r(&request);
     }
     fprintf(stderr, "Exiting..\n");
   }

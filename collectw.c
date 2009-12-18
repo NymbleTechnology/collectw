@@ -74,6 +74,8 @@ int collectw_init(const char *rrd_basedir, const char *user_config){
   return ret;
 }
 
+#define RRD_EXT ".rrd"
+
 static int _collectw_info(Stream stream, const char *path){
   DIR *f;
   int i;
@@ -88,38 +90,44 @@ static int _collectw_info(Stream stream, const char *path){
     if(!strcmp(d->d_name, ".")||!strcmp(d->d_name, ".."))continue;
     /* paste comma before non-first elements */
     i && FPrintF(stream, ","); i++;
-    /* output element name */
-    FPrintF(stream, "'%s':", d->d_name);
-    /* make full file path */
-    char file[strlen(path)+strlen(d->d_name)+2];
-    strcpy(file, path);
-    strcat(file, "/");
-    strcat(file, d->d_name);
-    /* if file is batabase, then gives info about it */
-    if(strstr(d->d_name, ".rrd")){
-      int k, len;
-      char *beg, *end, *arg[]={0, file, 0}, fp[]="ds[", bp[]="].type";
-      rrd_info_t *info, *infos=rrd_info(2, arg);
-      FPrintF(stream, "[");
-      for(k=0, info=infos; info; info=info->next){
+    { /* output element name */
+      char *p;
+      p=strstr(d->d_name, RRD_EXT);
+      p && (p[0]='\0');
+      FPrintF(stream, "'%s':", d->d_name);
+      p && (p[0]='.');
+    }
+    { /* make full file path */
+      char file[strlen(path)+strlen(d->d_name)+2];
+      strcpy(file, path);
+      strcat(file, "/");
+      strcat(file, d->d_name);
+      /* if file is batabase, then gives info about it */
+      if(strstr(d->d_name, RRD_EXT)){
+	int k, len;
+	char *beg, *end, *arg[]={0, file, 0}, fp[]="ds[", bp[]="].type";
+	rrd_info_t *info, *infos=rrd_info(2, arg);
+	FPrintF(stream, "[");
+	for(k=0, info=infos; info; info=info->next){
 #if 1
-	if(strstr(info->key, fp)==info->key && (end=strstr(info->key, bp))){
-	  if(k)FPrintF(stream, ","); k++;
-	  beg=info->key+strlen(fp);
-	  len=end-beg;
-	  char name[len+1];
-	  strncpy(name, beg, len);
-	  name[len]='\0';
-	  FPrintF(stream, "'%s'", name);
-	}
+	  if(strstr(info->key, fp)==info->key && (end=strstr(info->key, bp))){
+	    if(k)FPrintF(stream, ","); k++;
+	    beg=info->key+strlen(fp);
+	    len=end-beg;
+	    char name[len+1];
+	    strncpy(name, beg, len);
+	    name[len]='\0';
+	    FPrintF(stream, "'%s'", name);
+	  }
 #else
-	FPrintF(stream, "'%s' ", info->key);
+	  FPrintF(stream, "'%s' ", info->key);
 #endif
+	}
+	FPrintF(stream, "]");
+	if(infos)rrd_info_free(infos);  
+      }else{ /* else go into */
+	_collectw_info(stream, file);
       }
-      FPrintF(stream, "]");
-      if(infos)rrd_info_free(infos);  
-    }else{ /* else go into */
-      _collectw_info(stream, file);
     }
   }
   closedir(f);
@@ -127,14 +135,17 @@ static int _collectw_info(Stream stream, const char *path){
   return 0;
 }
 
+#define ERROR(message) {FPrintF(stream, "{status:false,message:'%s'}", message);return 3;}
+
 int collectw_none(Stream stream, const char **param){
-  FPrintF(stream, "{}");
-  return 0;
+  ERROR("Unsupported request!");
 }
 
 int collectw_info(Stream stream, const char **param){
   return _collectw_info(stream, collectw_rrd_basedir);
 }
+
+#define ALL_TYPES "MIN,AVERAGE,MAX"
 
 static int _collectw_data(Stream stream,
 			  const char *path,
@@ -143,11 +154,18 @@ static int _collectw_data(Stream stream,
 			  time_t *start,
 			  time_t *end,
 			  unsigned long *step){
+  char fullpath[strlen(collectw_rrd_basedir)+strlen(path)+1+strlen(RRD_EXT)+1];
   unsigned long ds_cnt=0, l, n, i;
   char **ds_name, k=0;
   rrd_value_t *data;
   
-  if(rrd_fetch_r(path, type, start, end, step, &ds_cnt, &ds_name, &data))return 2;
+  fullpath[0]='\0';
+  strcat(fullpath, collectw_rrd_basedir);
+  strlen(fullpath) && strcat(fullpath, "/");
+  strcat(fullpath, path);
+  strcat(fullpath, RRD_EXT);
+  
+  if(rrd_fetch_r(fullpath, type, start, end, step, &ds_cnt, &ds_name, &data))ERROR(rrd_get_error());
   
   l=(*end-*start) / *step;
   
@@ -178,8 +196,10 @@ static int _collectw_data(Stream stream,
   return 0;
 }
 
-#define TIME_FMT "%Y-%m-%d %H:%M:%S"
-#define ERROR(message) {FPrintF(stream, "{status:false,message:'%s'}", message);return 3;}
+#define DATE_FMT "%Y-%m-%d"
+#define TIME_FMT "%Y-%m-%d_%H:%M"
+
+/* params: path ds type start end */
 
 int collectw_data(Stream stream, const char **param){
   unsigned long step=1;
@@ -188,17 +208,20 @@ int collectw_data(Stream stream, const char **param){
   time_t start, end;
   
   if(!param[0] || !strlen(param[0]))ERROR("Path is empty!");
-  if(!param[1] || !strlen(param[1]))ERROR("Type is empty!");
+  //if(!param[2] || !strlen(param[2]))ERROR("Type is empty!");
+  param[2] || (param[2]=ALL_TYPES);
   
   if(!param[3] || !strlen(param[3]))ERROR("Start time is empty!");
-  prs=strptime(param[3], TIME_FMT, &t);
-  if(!prs || prs==param[3])ERROR("Start time incorrect!");
+  memset(&t, 0, sizeof(t));
+  prs=strptime(param[3], strchr(param[3], '_')?TIME_FMT:DATE_FMT, &t);
+  if(!prs)ERROR("Start time incorrect!");
   start=mktime(&t);
   
   if(!param[4] || !strlen(param[4]))ERROR("End time is empty!");
-  prs=strptime(param[4], TIME_FMT, &t);
-  if(!prs || prs==param[4])ERROR("End time incorrect!");
-  start=mktime(&t);
+  memset(&t, 0, sizeof(t));
+  prs=strptime(param[4], strchr(param[4], '_')?TIME_FMT:DATE_FMT, &t);
+  if(!prs)ERROR("End time incorrect!");
+  end=mktime(&t);
   
   return _collectw_data(stream, param[0], param[1], param[2], &start, &end, &step);
 }
