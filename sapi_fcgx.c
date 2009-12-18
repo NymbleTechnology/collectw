@@ -38,7 +38,6 @@ jmp_buf jmp_mark;
 void
 term(int i){
   fprintf(stderr, "Terminating..\n");
-  //run=0;
   longjmp(jmp_mark, 1);
 }
 
@@ -82,11 +81,17 @@ main(int argc, char **argv){
     const char *rs;
   }reque[]={
     // url schema: collectw?info
-    {collectw_info, NULL, "^info$", "~"},
+    {collectw_info, NULL, "^info$", "/"},
     // url schema: collectw?data:PATH(DS)[START,END]
-    {collectw_data, NULL, "^data:([[:alnum:]\\_\\.\\-]+\\.rrd)\\(([[:alpha:]]+)\\)\\[[[:digit:]]{4}\\-[[:digit:]]{2}\\-[[:digit:]]{2}[[:space:]][[:digit:]]{2}\\:[[:digit:]]{2}\\,\\]$", "~\1\2\3\4\5"},
+    {collectw_data, NULL, "^data:\
+([-/_a-z0-9]*)\
+(\\{([a-z]*)\\})?\
+\\(([_A-Z]*)\\)\
+\\[([-:_0-9]*),\
+([-:_0-9]*)\\]$", "~\0~\1\2\3\4/"},
+    // [0-9]{4}-[0-9]{2}-[0-1][0-9] [0-1][0-9]:[0-5][0-9]:[0-5][0-9]
     // any others
-    {collectw_none, NULL, "^.*$", "~"},
+    {collectw_none, NULL, "^.*$", "/"},
     {NULL, NULL, NULL, NULL}
   };
   unsigned char max_n=0;
@@ -166,10 +171,13 @@ main(int argc, char **argv){
 	    for(i=0;reque[i].re;i++){
 	      if(!reque[i].cb)continue;
 	      if(REG_NOMATCH==regexec(reque[i].pg, query, max_n, match, 0))continue;
+	      fprintf(stderr, "Request: %s ..\n", reque[i].re);
 	      
 	      /* Fill params */
-	      for(n=0;n<reque[i].rs[n];n++){
+	      for(n=0;reque[i].rs[n]!='/';n++){
+		//fprintf(stderr, "Found subst: %d\n", n);
 		if(match[n].rm_so>0 && reque[i].rs[n]!='~'){
+		  //fprintf(stderr, "Fill param: %d\n", reque[i].rs[n]);
 		  l=match[n].rm_eo-match[n].rm_so;
 		  param[reque[i].rs[n]]=malloc(l+1);
 		  strncpy(param[reque[i].rs[n]], query+match[n].rm_so, l);
