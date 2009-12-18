@@ -26,12 +26,21 @@
 #else
 #include COLLECTW_INTERFACE
 
+/* init */
 int collectw_init(const char *rrd_basedir,
 		  const char *user_config);
 
-int collectw_none(Stream stream, const char **param);
+/* Request handlers: */
+/* config load */
+int collectw_load(Stream stream, const char **param);
+/* config save */
+int collectw_save(Stream stream, const char **param);
+/* info retrieving */
 int collectw_info(Stream stream, const char **param);
+/* data retrieving */
 int collectw_data(Stream stream, const char **param);
+/* default handler */
+int collectw_none(Stream stream, const char **param);
 
 #endif
 

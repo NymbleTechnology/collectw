@@ -31,6 +31,8 @@
 
 #include"collectw.h"
 
+#define ERROR(message) {FPrintF(stream, "{status:false,message:'%s'}", message);return 3;}
+
 static const char *collectw_rrd_basedir=COLLECTW_RRD_BASEDIR;
 static const char *collectw_user_config=COLLECTW_USER_CONFIG;
 
@@ -72,6 +74,28 @@ int collectw_init(const char *rrd_basedir, const char *user_config){
   }
   
   return ret;
+}
+
+int collectw_load(Stream stream, const char **param){
+  if(!collectw_user_config)ERROR("Config file not defined!");
+  FILE* file=fopen(collectw_user_config, "r");
+  if(!file)ERROR("Config file not found or access denied!");
+  char buf[1024];
+  size_t cnt;
+  for(; !feof(file); (cnt=fread(buf, 1, sizeof(buf)-1, file))>0 && ((buf[cnt]='\0') || 1) && FPrintF(stream, buf));
+  fclose(file);
+  return 0;
+}
+
+int collectw_save(Stream stream, const char **param){
+  if(!param[0])ERROR("Empty config!");
+  if(!collectw_user_config)ERROR("Config file not defined!");
+  FILE* file=fopen(collectw_user_config, "w");
+  if(!file)ERROR("Config file not found or access denied!");
+  fwrite(param[0], 1, strlen(param[0]), file);
+  fclose(file);
+  FPrintF(stream, "{status:true,message:'Config saved..'}");
+  return 0;
 }
 
 #define RRD_EXT ".rrd"
@@ -134,8 +158,6 @@ static int _collectw_info(Stream stream, const char *path){
   FPrintF(stream, "}");
   return 0;
 }
-
-#define ERROR(message) {FPrintF(stream, "{status:false,message:'%s'}", message);return 3;}
 
 int collectw_none(Stream stream, const char **param){
   ERROR("Unsupported request!");

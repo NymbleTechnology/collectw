@@ -32,7 +32,6 @@
 
 #define TRY(code) if(code){fprintf(stderr,"Fatal error: " #code ".. Exiting..\n");exit(3);}
 
-//static char run=0;
 jmp_buf jmp_mark;
 
 void
@@ -90,7 +89,9 @@ main(int argc, char **argv){
 \\[([-:_0-9]*),\
 ([-:_0-9]*)\\]$", "~\0~\1\2\3\4/"},
     // [0-9]{4}-[0-9]{2}-[0-1][0-9] [0-1][0-9]:[0-5][0-9]:[0-5][0-9]
-    // any others
+    {collectw_load, NULL, "^load$", "/"},
+    {collectw_save, NULL, "^save:(.*$)", "~\0/"},
+    // default
     {collectw_none, NULL, "^.*$", "/"},
     {NULL, NULL, NULL, NULL}
   };
