@@ -247,3 +247,18 @@ int collectw_data(Stream stream, const char **param){
   
   return _collectw_data(stream, param[0], param[1], param[2], &start, &end, &step);
 }
+
+int collectw_time(Stream stream, const char **param){
+  time_t now;
+  struct tm t;
+  
+  memset(&t, 0, sizeof(t));
+  now=time(&now);
+  if(!localtime_r(&now, &t))ERROR("No local time!");
+  
+  char buf[32];
+  if(!strftime(buf, sizeof(buf), TIME_FMT, &t))ERROR("Error formating time!");
+  
+  FPrintF(stream, "{local:'%s'}", buf);
+  return 0;
+}

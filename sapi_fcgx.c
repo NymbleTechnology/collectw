@@ -91,6 +91,7 @@ main(int argc, char **argv){
     // [0-9]{4}-[0-9]{2}-[0-1][0-9] [0-1][0-9]:[0-5][0-9]:[0-5][0-9]
     {collectw_load, NULL, "^load$", "/"},
     {collectw_save, NULL, "^save:(.*$)", "~\0/"},
+    {collectw_time, NULL, "^time$", "/"},
     // default
     {collectw_none, NULL, "^.*$", "/"},
     {NULL, NULL, NULL, NULL}

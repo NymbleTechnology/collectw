@@ -39,6 +39,8 @@ int collectw_save(Stream stream, const char **param);
 int collectw_info(Stream stream, const char **param);
 /* data retrieving */
 int collectw_data(Stream stream, const char **param);
+/* time retrieving */
+int collectw_time(Stream stream, const char **param);
 /* default handler */
 int collectw_none(Stream stream, const char **param);
 
