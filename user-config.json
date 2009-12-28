@@ -1,0 +1,22 @@
+{
+    'Default View':{
+	'CPU':{
+	    '1llumium/cpu-0/cpu-system{value}(AVERAGE)':{title:'System',color:'#4075c2'},
+	    '1llumium/cpu-0/cpu-user{value}(AVERAGE)':{title:'User',color:'#bf5a2f'}
+	    /*,'1llumium/cpu-0/cpu-idle{value}(AVERAGE)':{color:'#a2bf2f'}*/
+	},
+	'Memory':{
+	    '1llumium/memory/memory-free{value}(AVERAGE)':{title:'Free',color:'#bf5a2f'},
+	    '1llumium/memory/memory-used{value}(AVERAGE)':{title:'Used',color:'#4075c2'},
+	    '1llumium/memory/memory-buffered{value}(AVERAGE)':{title:'Buffered',color:'#a2bf2f'},
+	    '1llumium/memory/memory-cached{value}(AVERAGE)':{title:'Cached',color:'#c7b25d'}
+	},
+	'EngineX':{//772fbf
+	    '1llumium/nginx/nginx_connections-waiting{value}(AVERAGE)':{title:'Waiting'},
+	    '1llumium/nginx/nginx_connections-active{value}(AVERAGE)':{title:'Active'},
+	    '1llumium/nginx/nginx_requests{value}(AVERAGE)':{title:'Requests'},
+	    '1llumium/nginx/nginx_connections-reading{value}(AVERAGE)':{title:'Reading'},
+	    '1llumium/nginx/nginx_connections-writing{value}(AVERAGE)':{title:'Writing'}
+	}
+    }
+}
