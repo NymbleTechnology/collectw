@@ -1,34 +1,9 @@
-
-Raphael.fn.g.legend=function(labels, otherslabel, mark, dir){
-    var x = cx + r + r / 5,
-    y = cy,
-    h = y + 10;
-    labels = labels || [];
-    dir = (dir && dir.toLowerCase && dir.toLowerCase()) || "east";
-    mark = paper.g.markers[mark && mark.toLowerCase()] || "disc";
-    chart.labels = paper.set();
-    for (var i = 0; i < len; i++) {
-	var clr = series[i].attr("fill"),
-	    j = values[i].order,
-	    txt;
-	values[i].others && (labels[j] = otherslabel || "Others");
-	labels[j] = paper.g.labelise(labels[j], values[i], total);
-	chart.labels.push(paper.set());
-	chart.labels[i].push(paper.g[mark](x + 5, h, 5).attr({fill: clr, stroke: "none"}));
-	chart.labels[i].push(txt = paper.text(x + 20, h, labels[j] || values[j]).attr(paper.g.txtattr).attr({fill: opts.legendcolor || "#000", "text-anchor": "start"}));
-	covers[i].label = chart.labels[i];
-	h += txt.getBBox().height * 1.2;
-    }
-    var bb = chart.labels.getBBox(),
-    tr = {
-	east: [0, -bb.height / 2],
-	west: [-bb.width - 2 * r - 20, -bb.height / 2],
-	north: [-r - bb.width / 2, -r - bb.height - 10],
-	south: [-r - bb.width / 2, r + 10]
-    }[dir];
-    chart.labels.translate.apply(chart.labels, tr);
-    chart.push(chart.labels);
-};
+/*
+ * CollectW - JavaScript CollectD UI
+ *
+ * Copyright (c) 2010 Phoenix Kayo
+ * Licensed under the GNU GPL license.
+ */
 
 $(function(){
 	var json_url=function(action){return '/collectw?'+action;};
