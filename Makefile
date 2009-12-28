@@ -1,3 +1,23 @@
+# Makefile --- 
+#
+# Copyright (C) 2009 Kayo Phoenix
+#
+# Author: Kayo Phoenix <kayo.k11.4@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
 title=CollectW - WebUI for CollectD by Phoenix Kayo
 
 target=collectw
@@ -7,7 +27,7 @@ objects=$(patsubst %.c,%.o,$(sources))
 html-object=index.html
 css-sources=$(wildcard css/*.css)
 css-object=style.css
-ecm-sources=$(wildcard js/*.js)
+ecm-sources=$(wildcard ecm/*.js)
 ecm-object=script.js
 
 LDFLAGS+=-lfcgi -lrrd
@@ -39,7 +59,12 @@ add-ecm=echo '<script type="text/javascript" src="$(1)"></script>';
 add-css=echo '<link rel="stylesheet" href="$(1)" type="text/css" />';
 add-div=echo '<div id="$(1)">$(2)</div>';
 
-all: collectw
+webcont+=$(html-object)
+ifndef --enable-debug
+webcont+=$(css-object) $(ecm-object)
+endif
+
+all: $(target) $(webcont)
 
 probe:
 	@echo CFLAGS=$(CFLAGS)
@@ -57,10 +82,14 @@ else
 	@$(call add-css,$(css-object)) >> $@
 	@$(call add-ecm,$(ecm-object)) >> $@
 endif
-	@{ $(call add-title) echo '</head><body>'; $(call add-div,tabs,<ul></ul>) $(call add-div,date) $(call add-div,view) $(call add-div,stat) echo '</body></html>'; } >> $@
+	@{ $(call add-title) echo '</head><body>'; echo '</body></html>'; } >> $@
 
+$(css-object): $(css-sources)
+	@cat $^ > $@
 
+$(ecm-object): $(ecm-sources)
+	@cat $^ > $@
 
 clean:
-	@rm -f $(target) $(objects) $(html-object) $(ecm-object) $(css-object)
+	@rm -f $(target) $(objects) $(webcont)
 
