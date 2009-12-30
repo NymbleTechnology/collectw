@@ -203,7 +203,7 @@ static int _collectw_data(Stream stream,
     
     for(n=0;n<l;n++){
       n && FPrintF(stream, ",");
-      FPrintF(stream, "%f", data[n*ds_cnt+i]);
+      FPrintF(stream, "%f", fabs(data[n*ds_cnt+i])>0.000001?data[n*ds_cnt+i]:0);
     }
     
     FPrintF(stream, "]");
