@@ -79,8 +79,8 @@ ifdef --enable-debug
 	@{ $(foreach f,$(css-sources),$(call add-css,$(f))) } >> $@
 	@{ $(foreach f,$(ecm-sources),$(call add-ecm,$(f))) } >> $@
 else
-	@$(call add-css,$(css-object)) >> $@
-	@$(call add-ecm,$(ecm-object)) >> $@
+	@{ $(call add-css,$(css-object)) } >> $@
+	@{ $(call add-ecm,$(ecm-object)) } >> $@
 endif
 	@{ $(call add-title) echo '</head><body>'; echo '</body></html>'; } >> $@
 
