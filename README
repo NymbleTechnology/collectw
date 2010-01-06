@@ -19,6 +19,11 @@
 --with-rrd-basedir=/var/lib/collectd/rrd	- Where will be located RRD databases (by default).
 --with-user-config=/etc/collectw.json		- Where will be located User Config for Web UI.
 
+--with-libfcgi-include-dir=/path/to/fcgiapp.h
+--with-libfcgi-lib-dir=/path/to/libfcgi.so
+--with-librrd-include-dir=/path/to/rrd.h
+--with-librrd-lib-dir=/path/to/librrd.so
+
 
 * Copyright notes
 

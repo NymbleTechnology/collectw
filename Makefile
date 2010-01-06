@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+ifeq ($(wildcard config),)
+$(error Run ./configure before..)
+else
 
 title=CollectW - WebUI for CollectD by Phoenix Kayo
 
@@ -30,17 +33,15 @@ css-object=style.css
 ecm-sources=$(wildcard ecm/*.js)
 ecm-object=script.js
 
-LDFLAGS+=-lfcgi -lrrd
-
 --prefix=/usr/local
---bin-dir=/bin
---web-dir=/share/collectw
+--bin-dir=bin
+--web-dir=share/collectw
 --with-interface=fcgx
---with-rrd-basedir=/var/lib/collectd/rrd
 --with-user-config=/etc/collectw.json
 
 include sapi_*.r
--include config
+include collectw.r
+include config
 
 ifdef --enable-debug
 CFLAGS+=-g -D DEBUG=1
@@ -50,7 +51,6 @@ CFLAGS+=-D COLLECTW_USER_CONFIG=\"$(--with-user-config)\"
 endif
 
 CFLAGS+=-D COLLECTW_INTERFACE=\"sapi_$(--with-interface).h\"
-CFLAGS+=-D COLLECTW_RRD_BASEDIR=\"$(--with-rrd-basedir)\"
 
 add-doctype=echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
 add-contype=echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
@@ -66,12 +66,11 @@ endif
 
 all: $(target) $(webcont)
 
-probe:
-	@echo CFLAGS=$(CFLAGS)
-	@echo LDFLAGS=$(LDFLAGS)
+check:
+	@$(if $(strip $(check-dep)),$(foreach d,$(check-dep),echo "Dependence \"$d\" unsatisfied..";) exit 1,exit 0)
 
 $(target): $(objects)
-	@gcc -o $@ $^ $(LDFLAGS)
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 $(html-object):
 	@{ $(call add-doctype) echo '<html><head>'; $(call add-contype) } > $@
@@ -93,3 +92,6 @@ $(ecm-object): $(ecm-sources)
 clean:
 	@rm -f $(target) $(objects) $(webcont)
 
+.PHONY: check clean
+
+endif
