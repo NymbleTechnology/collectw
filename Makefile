@@ -33,11 +33,15 @@ css-object=style.css
 ecm-sources=$(wildcard ecm/*.js)
 ecm-object=script.js
 
+nginx-config=collectw.nginx
+site-config=$(nginx-config)
+
 --prefix=/usr/local
 --bin-dir=bin
 --web-dir=share/collectw
 --with-interface=fcgx
 --with-user-config=/etc/collectw.json
+--nginx-cfg-dir=/etc/nginx
 
 include sapi_*.r
 include collectw.r
@@ -64,7 +68,7 @@ ifndef --enable-debug
 webcont+=$(css-object) $(ecm-object)
 endif
 
-all: $(target) $(webcont)
+all: $(target) $(webcont) $(site-config)
 
 check:
 	@$(if $(strip $(check-dep)),$(foreach d,$(check-dep),echo "Dependence \"$d\" unsatisfied..";) exit 1,exit 0)
@@ -89,9 +93,38 @@ $(css-object): $(css-sources)
 $(ecm-object): $(ecm-sources)
 	@cat $^ > $@
 
-clean:
-	@rm -f $(target) $(objects) $(webcont)
+$(nginx-config):
+	@echo "# CollectW server config.." > $@
+	@echo "server {" >> $@
+	@echo "  listen: $(--collectw-server-listen);" >> $@
+	@echo "  server_name: $(--collectw-server-name);" >> $@
+	@echo "  root $(--prefix)/$(--web-dir);" >> $@
+	@echo "  index index.html;" >> $@
+	@echo "  location /collectw {" >> $@
+	@echo "    fastcgi_pass 127.0.0.1$(--with-fcgx-listen);" >> $@
+	@echo "    include fastcgi_params;" >> $@
+	@echo "  }" >> $@
+	@echo "}" >> $@
+nginx-config: $(nginx-config)
 
-.PHONY: check clean
+clean:
+	@rm -f $(target) $(objects) $(webcont) $(site-config)
+
+install: all
+ifdef --enable-debug
+	@ln -s "$(PWD)/$(target)" $(--prefix)/$(--bin-dir)/$(target)
+	@ln -s "$(PWD)" $(--prefix)/$(--web-dir)
+	@[ -d $(--nginx-cfg-dir) ] && { ln -s "$(PWD)/$(nginx-config)" $(--nginx-cfg-dir)/sites-available/$(nginx-config); ln -s $(--nginx-cfg-dir)/sites-available/$(nginx-config) $(--nginx-cfg-dir)/sites-enabled/$(nginx-config); }
+else
+	@install -m 755 $(target) $(--prefix)/$(--bin-dir)
+	@install -m 644 $(webcont) $(--prefix)/$(--web-dir)
+endif
+
+uninstall:
+	@rm -f $(--prefix)/$(--bin-dir)/$(target)
+	@rm -rf $(--prefix)/$(--web-dir)
+	@rm -f $(--nginx-cfg-dir)/sites-enabled/$(nginx-config) $(--nginx-cfg-dir)/sites-available/$(nginx-config)
+
+.PHONY: check clean install uninstall
 
 endif
