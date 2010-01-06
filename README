@@ -3,7 +3,7 @@
 * Build Dependencies
 
   librrd-dev    - RRD Tool API, needed for compilation core code.
-  
+  libfcgi-dev   - FCGX API, needed for compiling FastCGI SAPI.
 
 * Installation Dependencies
 
