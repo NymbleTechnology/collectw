@@ -1,0 +1,3 @@
+exec=./$name
+pidf=$name.pid
+logf=$name.log
