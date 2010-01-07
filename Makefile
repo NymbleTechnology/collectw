@@ -42,6 +42,8 @@ site-config=$(nginx-config)
 --with-interface=fcgx
 --with-user-config=/etc/collectw.json
 --nginx-cfg-dir=/etc/nginx
+--server-listen=4040
+--server-name=
 
 include sapi_*.r
 include collectw.r
@@ -49,12 +51,23 @@ include config
 
 ifdef --enable-debug
 CFLAGS+=-g -D DEBUG=1
-CFLAGS+=-D COLLECTW_USER_CONFIG=\"user-config.json\"
-else
-CFLAGS+=-D COLLECTW_USER_CONFIG=\"$(--with-user-config)\"
 endif
 
-CFLAGS+=-D COLLECTW_INTERFACE=\"sapi_$(--with-interface).h\"
+webcont+=$(html-object)
+nginx-fcgi-listen=127.0.0.1$(--with-fcgx-listen)
+
+ifdef --devel-mode
+user-config=$(PWD)/user-config.json
+www-data=$(PWD)
+bin-exec=$(PWD)/$(target)
+webcont+=$(css-object) $(ecm-object)
+else
+user-config=$(--with-user-config)
+www-data=$(--prefix)/$(--web-dir)
+bin-exec=$(--prefix)/$(--bin-dir)/$(target)
+endif
+
+CFLAGS+=-D COLLECTW_USER_CONFIG=\"$(user-config)\" -D COLLECTW_INTERFACE=\"sapi_$(--with-interface).h\"
 
 add-doctype=echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
 add-contype=echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
@@ -62,11 +75,6 @@ add-title=echo '<title>$(title)</title>';
 add-ecm=echo '<script type="text/javascript" src="$(1)"></script>';
 add-css=echo '<link rel="stylesheet" href="$(1)" type="text/css" />';
 add-div=echo '<div id="$(1)">$(2)</div>';
-
-webcont+=$(html-object)
-ifndef --enable-debug
-webcont+=$(css-object) $(ecm-object)
-endif
 
 all: $(target) $(webcont) $(site-config)
 
@@ -78,7 +86,7 @@ $(target): $(objects)
 
 $(html-object):
 	@{ $(call add-doctype) echo '<html><head>'; $(call add-contype) } > $@
-ifdef --enable-debug
+ifdef --devel-mode
 	@{ $(foreach f,$(css-sources),$(call add-css,$(f))) } >> $@
 	@{ $(foreach f,$(ecm-sources),$(call add-ecm,$(f))) } >> $@
 else
@@ -96,12 +104,12 @@ $(ecm-object): $(ecm-sources)
 $(nginx-config):
 	@echo "# CollectW server config.." > $@
 	@echo "server {" >> $@
-	@echo "  listen: $(--collectw-server-listen);" >> $@
-	@echo "  server_name: $(--collectw-server-name);" >> $@
-	@echo "  root $(--prefix)/$(--web-dir);" >> $@
+	$(if $(strip $(--server-listen)),@echo "  listen: $(--server-listen);" >> $@)
+	$(if $(strip $(--server-name)),@echo "  server_name: $(--server-name);" >> $@)
+	@echo "  root $(www-data);" >> $@
 	@echo "  index index.html;" >> $@
-	@echo "  location /collectw {" >> $@
-	@echo "    fastcgi_pass 127.0.0.1$(--with-fcgx-listen);" >> $@
+	@echo "  location /$(target) {" >> $@
+	@echo "    fastcgi_pass $(nginx-fcgi-listen);" >> $@
 	@echo "    include fastcgi_params;" >> $@
 	@echo "  }" >> $@
 	@echo "}" >> $@
@@ -111,19 +119,20 @@ clean:
 	@rm -f $(target) $(objects) $(webcont) $(site-config)
 
 install: all
-ifdef --enable-debug
-	@ln -s "$(PWD)/$(target)" $(--prefix)/$(--bin-dir)/$(target)
-	@ln -s "$(PWD)" $(--prefix)/$(--web-dir)
+ifdef --devel-mode
 	@[ -d $(--nginx-cfg-dir) ] && { ln -s "$(PWD)/$(nginx-config)" $(--nginx-cfg-dir)/sites-available/$(nginx-config); ln -s $(--nginx-cfg-dir)/sites-available/$(nginx-config) $(--nginx-cfg-dir)/sites-enabled/$(nginx-config); }
 else
-	@install -m 755 $(target) $(--prefix)/$(--bin-dir)
-	@install -m 644 $(webcont) $(--prefix)/$(--web-dir)
+	@install -m 755 $(target) $(bin-exec)
+	@install -m 644 $(webcont) $(www-data)
 endif
 
 uninstall:
-	@rm -f $(--prefix)/$(--bin-dir)/$(target)
-	@rm -rf $(--prefix)/$(--web-dir)
 	@rm -f $(--nginx-cfg-dir)/sites-enabled/$(nginx-config) $(--nginx-cfg-dir)/sites-available/$(nginx-config)
+ifdef --devel-mode
+else
+	@rm -f $(bin-exec)
+	@rm -rf $(www-data)
+endif
 
 .PHONY: check clean install uninstall
 
