@@ -60,11 +60,11 @@ ifdef --devel-mode
 user-config=$(PWD)/user-config.json
 www-data=$(PWD)
 bin-exec=$(PWD)/$(target)
-webcont+=$(css-object) $(ecm-object)
 else
 user-config=$(--with-user-config)
 www-data=$(--prefix)/$(--web-dir)
 bin-exec=$(--prefix)/$(--bin-dir)/$(target)
+webcont+=$(css-object) $(ecm-object)
 endif
 
 CFLAGS+=-D COLLECTW_USER_CONFIG=\"$(user-config)\" -D COLLECTW_INTERFACE=\"sapi_$(--with-interface).h\"
