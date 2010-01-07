@@ -42,7 +42,7 @@ site-config=$(nginx-config)
 --with-interface=fcgx
 --with-user-config=/etc/collectw.json
 --nginx-cfg-dir=/etc/nginx
---server-listen=4040
+--server-listen=40011
 --server-name=
 
 include sapi_*.r
@@ -57,9 +57,9 @@ webcont+=$(html-object)
 nginx-fcgi-listen=127.0.0.1$(--with-fcgx-listen)
 
 ifdef --devel-mode
-user-config=$(PWD)/user-config.json
-www-data=$(PWD)
-bin-exec=$(PWD)/$(target)
+user-config=$(CURDIR)/user-config.json
+www-data=$(CURDIR)
+bin-exec=$(CURDIR)/$(target)
 else
 user-config=$(--with-user-config)
 www-data=$(--prefix)/$(--web-dir)
@@ -104,15 +104,20 @@ $(ecm-object): $(ecm-sources)
 $(nginx-config):
 	@echo "# CollectW server config.." > $@
 	@echo "server {" >> $@
-	$(if $(strip $(--server-listen)),@echo "  listen: $(--server-listen);" >> $@)
-	$(if $(strip $(--server-name)),@echo "  server_name: $(--server-name);" >> $@)
-	@echo "  root $(www-data);" >> $@
-	@echo "  index index.html;" >> $@
-	@echo "  location /$(target) {" >> $@
-	@echo "    fastcgi_pass $(nginx-fcgi-listen);" >> $@
-	@echo "    include fastcgi_params;" >> $@
-	@echo "  }" >> $@
-	@echo "}" >> $@
+	$(if $(strip $(--server-listen)),@echo "  listen $(--server-listen);" >> $@)
+	$(if $(strip $(--server-name)),@echo "  server_name $(--server-name);" >> $@)
+	@echo '  root $(www-data);' >> $@
+	@echo '  index index.html;' >> $@
+	@echo '  location ~* ^.+\.(css|js|png|ico)$$ {' >> $@
+	@echo '    access_log off;' >> $@
+	@echo '    expires 31d;' >> $@
+	@echo '    add_header Last-Modified: $$date_gmt;' >> $@
+	@echo '  }' >> $@
+	@echo '  location /$(target) {' >> $@
+	@echo '    fastcgi_pass $(nginx-fcgi-listen);' >> $@
+	@echo '    include fastcgi_params;' >> $@
+	@echo '  }' >> $@
+	@echo '}' >> $@
 nginx-config: $(nginx-config)
 
 clean:
@@ -120,14 +125,14 @@ clean:
 
 install: all
 ifdef --devel-mode
-	@[ -d $(--nginx-cfg-dir) ] && { ln -s "$(PWD)/$(nginx-config)" $(--nginx-cfg-dir)/sites-available/$(nginx-config); ln -s $(--nginx-cfg-dir)/sites-available/$(nginx-config) $(--nginx-cfg-dir)/sites-enabled/$(nginx-config); }
+	@[ -d $(--nginx-cfg-dir) ] && { ln -s "$(CURDIR)/$(nginx-config)" $(--nginx-cfg-dir)/sites-available/$(target); ln -s $(--nginx-cfg-dir)/sites-available/$(target) $(--nginx-cfg-dir)/sites-enabled/$(target); }
 else
 	@install -m 755 $(target) $(bin-exec)
 	@install -m 644 $(webcont) $(www-data)
 endif
 
 uninstall:
-	@rm -f $(--nginx-cfg-dir)/sites-enabled/$(nginx-config) $(--nginx-cfg-dir)/sites-available/$(nginx-config)
+	@rm -f $(--nginx-cfg-dir)/sites-enabled/$(target) $(--nginx-cfg-dir)/sites-available/$(target)
 ifdef --devel-mode
 else
 	@rm -f $(bin-exec)
