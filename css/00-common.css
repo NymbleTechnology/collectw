@@ -145,6 +145,16 @@ div#legend > #title {
                       margin: 10px;
                      }
 
+div#legend > div{
+                  /*border: solid transparent 2px;*/
+                  cursor: pointer;
+                  font-weight: normal;
+                  }
+div#legend > div.hover{
+                        /*border-width: 3px;*/
+                        font-weight: bold;
+                        }
+
 div#legend > div > div#mark {
                               float: left;
                               width: 8px;
@@ -154,3 +164,9 @@ div#legend > div > div#mark {
                               border: solid #222 1px;
                               background: #aaa;
                               }
+div#legend > div.hover > div#mark {
+                                    width: 10px;
+                                    height: 10px;
+                                    margin: 3px;
+                                    margin-bottom: 1px;
+                                    }
