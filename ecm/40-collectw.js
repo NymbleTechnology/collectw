@@ -7,48 +7,14 @@
 
 $(function(){
 	var json_url=function(action){return '/collectw?'+action;};
-  /*
-  var si_char=function(d){
-    var table = {
-      1e-24: "y",
-      1e-21: "z",
-      1e-18: "a",
-      1e-15: "f",
-      1e-12: "p",
-      1e-9:  "n",
-      1e-6:  "µ",
-      1e-3:  "m",
-      1:     "",
-      1e3:   "k",
-      1e6:   "M",
-      1e9:   "G",
-      1e12:  "T",
-      1e15:  "P",
-      1e18:  "E",
-      1e21:  "Z",
-      1e24:  "Y"
-  };
-  var i;
-  for(var i in table)if(d<i)break;
-  if(i == 0 || i == tablesize) {
-    m = 1.0;
-    s = "";
-    return false;
-  } else {
-    --i;
-    m = si_table[i].factor;
-    s = si_table[i].si_char;
-    return true;
-  }
-}*/
-
+	
 	var info=function(){
 	    $.getJSON(json_url('info'), function(json){
 		    if(json.status==false){
 			alert(json.message);
 			return;
 		    }
-		    status.text('Copleting..');
+		    status.text('Completting..');
 		    ctx.append($('<select>').attr('id', 'nodes'));
 		    var select=ctx.find('select#nodes');
 		    var opt_add=function(select, node, path, indent){
@@ -71,44 +37,10 @@ $(function(){
 		});
 	};
 	
-	
-	var date={
-	    s2n:function(s){
-		s=parseInt(s, 10);
-		//s--;
-		return s;
-	    },
-	    n2s:function(n){
-		n=parseInt(n, 10);
-		//n++;
-		return (n>9?'':'0')+n;
-	    },
-	    parse:function(value){
-		var Q=date.s2n;
-		var m=value.match(/^(\d{4})\-(\d{2})\-(\d{2})(\_(\d{2})\:(\d{2}))?$/);
-		if(!m[0])return null;
-		var d=new Date(Q(m[1]), Q(m[2])-1, Q(m[3]), m[4]?Q(m[5]):null, m[4]?Q(m[6]):null);
-		return Math.round(d.getTime()/1000);
-	    },
-	    tostr:function(value){
-		var Q=date.n2s;
-		var d=new Date(parseInt(value)*1000);
-		var r=Q(d.getFullYear())+'-'+Q(d.getMonth()+1)+'-'+Q(d.getDate());
-		if(d.getMinutes()>0 || d.getHours()>0) r+='_'+Q(d.getHours())+':'+Q(d.getMinutes());
-		return r;
-	    },
-	    gen_interp:function(beg, end, steps){
-		var r=[], b=date.parse(beg), e=date.parse(end), s=Math.round((e-b)/(steps-1)), o=beg.search('_')||end.search('_');
-		for(var i=b;i<e;i+=s) r.push(date.tostr(i)); r.push(date.tostr(e));
-		return r;
-	    }
-	};
-	
-	//alert(['2009-12-18_22:00', date.tostr(date.parse('2009-12-18_22:00'))]);
-	//alert(['2009-12-18', date.tostr(date.parse('2009-12-18'))]);
-	//alert(date.gen_interp('2009-12-21_18:00', '2009-12-21_18:30', 3));
+	var date=$.simple_date;
 	
 	var draw=function(ctx, title, interval, conf){
+	    var gutter=10, linewidth=2, hoverlinewidth=3;
 	    var x=[], y=[], l=[], c=[];
 	    
 	    for(var name in conf){
@@ -128,9 +60,34 @@ $(function(){
 	    //r.circle(50, 50, 40);
 	    r.g.txtattr.font="10px 'Fontin Sans', Fontin-Sans, sans-serif";
 	    
+	    var g={x:60,y:20,w:dia.innerWidth()-80,h:dia.innerHeight()-40};
+	    
 	    leg.legend(title, l, c);
-	    r.g.linechart(60, 20, ctx.innerWidth()-80, ctx.innerHeight()-40, x, y, {nostroke: false, axis: "0 0 1 1", symbol: "", legendpos: "west", legend:l, colors:c.length==y.length?c:null});
-	    //stat.text('Are you see? '+d.length+' values');
+	    var ag=r.g.linechart(g.x, g.y, g.w, g.h, x, y, {nostroke: false, width: leg.find('div#mark').css('border-width'), axis: "0 0 0 0", symbol: "", colors:c.length==y.length?c:null});
+	    
+	    var ey=r.g.axis_edges(y), sy=Math.floor((g.h)/20);
+	    var ex=r.g.axis_edges(x), sx=24;
+	    var date_labels=date.smart_gen_interp(interval[0], interval[1], sx);
+	    var ay=r.g.smart_axis(g.x+gutter, g.y+g.h-gutter, g.h-2*gutter, ey[0], ey[1], sy, 1);
+	    var ax=r.g.smart_axis(g.x+gutter, g.y+g.h-gutter, g.w-2*gutter, 0, 24, sx, 0, date_labels);
+	    ag.axis.push(ax, ay);
+	    
+	    leg.nodes
+	    .bind('mouseenter', function(){
+		    var s=$(this);
+		    var l=ag.lines[s.attr('num')];
+		    
+		    s.addClass('hover');
+		    l.toFront();
+		    l.attr({'stroke-width':hoverlinewidth});
+		})
+	    .bind('mouseleave', function(){
+		    var s=$(this);
+		    var l=ag.lines[s.attr('num')];
+		    
+		    s.removeClass('hover');
+		    l.attr({'stroke-width':linewidth});
+		});
 	}
 	
 	$.fn.legend=function(title, labels, colors){
@@ -139,25 +96,26 @@ $(function(){
 	    for(var i in labels){
 		var m=colors[i].match(/hsb\s*\(\s*([\.\d]+)\s*\,\s*([\.\d]+)\s*\,\s*([\.\d]+)\s*\)/);
 		m=m?Raphael.hsb2rgb(m[1],m[2],m[3]).hex:colors[i];
-		this.append('<div><div id="mark" style="background:'+m+'"></div>'+labels[i]);
+		this.append('<div id="node" num="'+i+'"><div id="mark" style="background:'+m+'"></div>'+labels[i]);
 	    }
+	    this.nodes=this.find('div#node');
+	    return this;
 	};
 	
 	var disp=function(ctx, title, conf){
-	    var range=interval.get();
+	    stat.text('Rendering view "'+title+'" ..');
+	    var range=interval.get_range();
 	    var requests=0; for(var name in conf) requests++;
 	    for(var name in conf){
 		(function(name){
 		    $.getJSON(json_url('data:'+name+'['+range[0]+','+range[1]+']'), function(json){
 			    var attr=name.match(/\{([^\{]+)\}/)[1];
 			    conf[name].data=json[attr];
-			    //alert(json[attr]);
 			    requests--;
-			    if(requests==0) draw(ctx, title, interval, conf);
+			    if(requests==0) draw(ctx, title, range, conf);
 			});
 		})(name);
 	    }
-	    
 	}
 	
 	var init_view=function(name, areas){
@@ -167,7 +125,7 @@ $(function(){
 	    tabs.append('<li>');
 	    var tab=tabs.find('li:last');
 	    tab.text(name);
-	    
+
 	    var redraw=function(){
 		var n=0; for(var title in areas)n++;
 		var w=view.innerWidth(), h=view.innerHeight(), gh=h/n;
@@ -182,7 +140,7 @@ $(function(){
 	    
 	    tab.bind('click', redraw);
 	    interval.bind('change', redraw);
-	    
+
 	    /*
 	    var graph=ctx.find('div#graph').css({
 		    '-moz-border-radius':'10px',
@@ -197,7 +155,7 @@ $(function(){
 	    //setTimeout(init, 100);
 	    //setTimeout(draw, 100);
 	}
-	
+
 	var init=function(){
 	    init_date();
 	    stat.text('Loading user config..');
@@ -207,7 +165,7 @@ $(function(){
 		    tabs.find('li:first').click();
 		});
 	}
-	
+
 	var body=$('body');
 	body.append('<div id="tabs"><ul>');
 	body.find('div#tabs').append('<span>');
@@ -218,13 +176,13 @@ $(function(){
 	stat.text('Loading..');
 	var tabs=body.find('#tabs ul');
 	var interval=body.find('div#tabs > span');
-	interval.set=function(d){
+	interval.set_range=function(d){
 	    if(typeof d=='string') d=[d,d];
 	    if(d[0]==d[1])d[1]=date.tostr(date.parse(d[0])+60*60*24);
 	    this.html(d.join(' ÷ '));
 	    this.trigger('change');
 	}
-	interval.get=function(){
+	interval.get_range=function(){
 	    var d=this.html().split(' ÷ ');
 	    return d;
 	}
@@ -233,8 +191,8 @@ $(function(){
 	var init_date=function(){
 	    $.getJSON(json_url('time'), function(json){
 		    var d=json.local.split('_')[0];
-		    interval.set(d);
-		    d=interval.get();
+		    interval.set_range(d);
+		    d=interval.get_range();
 		    var cal=body.find('div#cal');
 		    cal.DatePicker({
 			    flat: true,
@@ -245,7 +203,7 @@ $(function(){
 				mode: 'range',
 				starts: 1,
 				onChange: function(formated, dates){
-				interval.set(formated);
+				interval.set_range(formated);
 			    },
 				});
 		    var pick=cal.find('div.datepicker');
@@ -258,7 +216,7 @@ $(function(){
 		    pick.css('position', 'absolute');
 		});
 	}
-	
+
 	setTimeout(init, 100);
-	
+
     });
