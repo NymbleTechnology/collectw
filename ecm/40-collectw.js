@@ -60,7 +60,7 @@ $(function(){
 	    r.g.txtattr.font="10px 'Fontin Sans', Fontin-Sans, sans-serif";
 	    
 	    var ey=r.g.axis_edges(y), ex=r.g.axis_edges(x);
-	    var g={x:60,y:20,w:dia.innerWidth()-100,h:dia.innerHeight()-60};
+	    var g={x:80,y:40,w:dia.innerWidth()-160,h:dia.innerHeight()-80};
 	    
 	    leg.legend(title, l, c);
 	    
@@ -79,21 +79,10 @@ $(function(){
 		    var ax=r.g.smart_axis(g.x, g.y+g.h, g.w, 0, 24, sx, 0, date_labels);
 		    //ag.axis.push(ax);
 		    
-		    var p=r.set();
-		    p.x=r.path('');
-		    p.y=r.path('');
-		    p.a=r.rect(g.x, g.y, g.w, g.h).attr({'fill':'#000','fill-opacity':0.0});
-		    p.push(p.x, p.y);
-		    p.hide();
-		    
-		    $(p.a.node)
-			.hover(function(){p.show();}, function(){p.hide();})
-			.mousemove(function(e){
-				var d=dia.offset();
-				var c={x:e.pageX-d.left-g.x, y:e.pageY-d.top-g.y};
-				p.x.attr({path:'M'+g.x+' '+(g.y+c.y)+'L'+(g.x+g.w)+' '+(g.y+c.y)});
-				p.y.attr({path:'M'+(g.x+c.x)+' '+g.y+'L'+(g.x+c.x)+' '+(g.y+g.h)});
-			    });
+		    r.g.picker(g.x, g.y, g.w, g.h, [date.parse(interval[0]), date.parse(interval[1])], ey, 
+			       {holder:dia, popup:'popup', gutter:0, format:function(v, e){
+				       return $.short_number(v.y, 2)+' at '+date.tostr(Math.round(v.x)).replace(/_/g, ' ');
+			    }});
 		    
 		    leg.nodes
 			.bind('mouseenter', function(){
@@ -192,7 +181,7 @@ $(function(){
 	body.append('<div id="cal">');
 	body.append('<div id="view">');
 	body.append('<div id="stat">');
-	var stat=body.find('#stat');
+	var stat=body.find('#stat'); /* for debug */ window.stat=stat;
 	stat.text('Loading..');
 	var tabs=body.find('#tabs ul');
 	var interval=body.find('div#tabs > span');
