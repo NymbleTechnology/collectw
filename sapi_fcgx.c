@@ -30,6 +30,8 @@
 #include<getopt.h>
 #include<regex.h>
 
+#include"urlcode.h"
+
 #define TRY(code) if(code){fprintf(stderr,"Fatal error: " #code ".. Exiting..\n");exit(3);}
 
 jmp_buf jmp_mark;
@@ -45,7 +47,7 @@ help(){
 }
 
 main(int argc, char **argv){
-  const char *listen=SAPI_FCGX_LISTEN, *rrddir=NULL, *config=NULL, *query, **args;
+  const char *listen=SAPI_FCGX_LISTEN, *rrddir=NULL, *config=NULL;
   int socket, i, c;
   FCGX_Request request;
   
@@ -79,15 +81,22 @@ main(int argc, char **argv){
     const char *re;
     const char *rs;
   }reque[]={
+    /*
+      Format of arguments line:
+      
+      [char1][char2][char3]...[charN]
+      
+      Where [charX]:
+      
+      ~           - no return as argument
+      /           - end of argument list
+      \NUMBER     - return as argument NUMBER
+      
+     */
     // url schema: collectw?info
     {collectw_info, NULL, "^info$", "/"},
-    // url schema: collectw?data:PATH(DS)[START,END]
-    {collectw_data, NULL, "^data:\
-([-/_a-z0-9]*)\
-(\\{([a-z]*)\\})?\
-\\(([_A-Z]*)\\)\
-\\[([-:_0-9]*),\
-([-:_0-9]*)\\]$", "~\0~\1\2\3\4/"},
+    // url schema: collectw?data:[DATE_FROM,DATE_TO]{PATH1:DS1,PATH2:DS2,...}
+    {collectw_data, NULL, "^data:\\[([-:_0-9]*),([-:_0-9]*)\\]\\{([-_,:/a-z0-9]*)\\}$", "~\0\1\2/"},
     // [0-9]{4}-[0-9]{2}-[0-1][0-9] [0-1][0-9]:[0-5][0-9]:[0-5][0-9]
     {collectw_load, NULL, "^load$", "/"},
     {collectw_save, NULL, "^save:(.*$)", "~\0/"},
@@ -133,6 +142,8 @@ main(int argc, char **argv){
   
   /* Init main cicle */
   {
+    const char *raw_query/*, **args*/;
+    char *query;
     struct sigaction sa;
     sigset_t sigset;
     
@@ -155,12 +166,13 @@ main(int argc, char **argv){
       fprintf(stderr, "Running main cicle..\n");
       for(;;){
 	TRY( FCGX_Accept_r(&request) );
-	query=FCGX_GetParam("QUERY_STRING", request.envp);
+	raw_query=FCGX_GetParam("QUERY_STRING", request.envp);
 	//FPrintF(request.out, "Content-Type: application/json; charset=utf-8\r\n");
 	FPrintF(request.out, "Content-Type: text/plain; charset=utf-8\r\n");
 	//FPrintF(request.out, "X-JSON: ['ok']\r\n");
 	FPrintF(request.out, "\r\n");
-	if(query){
+	if(raw_query){
+	  query=url_decode(raw_query);
 	  fprintf(stderr, "Processing query: %s ..\n", query);
 #ifdef DEBUG
 	  // url schema: collectw?env
@@ -201,6 +213,7 @@ main(int argc, char **argv){
 #ifdef DEBUG
 	  }
 #endif
+	  url_free(query);
 	}
 	
 	FPrintF(request.out, "\r\n");

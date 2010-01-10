@@ -28,10 +28,11 @@
 #define __USE_XOPEN
 #include<time.h>
 #include<rrd.h>
+#include<math.h>
 
 #include"collectw.h"
 
-#define ERROR(message) {FPrintF(stream, "{status:false,message:'%s'}", message);return 3;}
+#define ERROR(message) {FPrintF(stream, "{status:false,message:\"%s\"}", message);return 3;}
 
 static const char *collectw_rrd_basedir=COLLECTW_RRD_BASEDIR;
 static const char *collectw_user_config=COLLECTW_USER_CONFIG;
@@ -167,14 +168,12 @@ int collectw_info(Stream stream, const char **param){
   return _collectw_info(stream, collectw_rrd_basedir);
 }
 
-#define ALL_TYPES "MIN,AVERAGE,MAX"
-
 static int _collectw_data(Stream stream,
 			  const char *path,
 			  const char *ds,
 			  const char *type,
-			  time_t *start,
-			  time_t *end,
+			  time_t *from,
+			  time_t *to,
 			  unsigned long *step){
   char fullpath[strlen(collectw_rrd_basedir)+strlen(path)+1+strlen(RRD_EXT)+1];
   unsigned long ds_cnt=0, l, n, i;
@@ -187,30 +186,48 @@ static int _collectw_data(Stream stream,
   strcat(fullpath, path);
   strcat(fullpath, RRD_EXT);
   
-  if(rrd_fetch_r(fullpath, type, start, end, step, &ds_cnt, &ds_name, &data))ERROR(rrd_get_error());
+  if(rrd_fetch_r(fullpath, type, from, to, step, &ds_cnt, &ds_name, &data)){
+    //ERROR(rrd_get_error());
+    //FPrintF(stream, "[]");
+    FPrintF(stream, "[\"%s\"]", rrd_get_error());
+    return 4;
+  }
   
-  l=(*end-*start) / *step;
+  l = (*to-*from) / *step;
   
-  FPrintF(stream, "{");
   for(i=0;i<ds_cnt;i++) {
-    if(ds && strlen(ds) && !strstr(ds, ds_name[i])){
+    if(!ds || !strlen(ds) || strcmp(ds, ds_name[i])){
       free(ds_name[i]);
       continue;
     }
     
-    k && FPrintF(stream, ","); k=1;
-    FPrintF(stream, "%s:[", ds_name[i]);
+    FPrintF(stream, "[");
     
     for(n=0;n<l;n++){
       n && FPrintF(stream, ",");
-      FPrintF(stream, "%f", fabs(data[n*ds_cnt+i])>0.000001?data[n*ds_cnt+i]:0);
+#ifdef ZERO_INSTEAD_OF_NAN_AND_INF
+      if(isnan(data[n*ds_cnt+i]) || isinf(data[n*ds_cnt+i])){
+	FPrintF(stream, "0");
+      }else{
+	FPrintF(stream, "%g", data[n*ds_cnt+i]);
+      }
+#else
+      if(isnan(data[n*ds_cnt+i])){
+	FPrintF(stream, "NaN");
+      }else{
+	if(isinf(data[n*ds_cnt+i])){
+	  FPrintF(stream, "%sInfinity", signbit(data[n*ds_cnt+i])?"-":"");
+	}else{
+	  FPrintF(stream, "%g", data[n*ds_cnt+i]);
+	}
+      }
+#endif
     }
     
     FPrintF(stream, "]");
     
     free(ds_name[i]);
   }
-  FPrintF(stream, "}");
   
   free(ds_name);
   free(data);
@@ -224,28 +241,61 @@ static int _collectw_data(Stream stream,
 /* params: path ds type start end */
 
 int collectw_data(Stream stream, const char **param){
-  unsigned long step=1;
-  const char *prs;
-  struct tm t;
-  time_t start, end;
+  const char *types[]={"AVERAGE", "MIN", "MAX", NULL};
+  unsigned long stepping=1, step;
+  const char *d;
+  time_t start, end, from, to;
   
-  if(!param[0] || !strlen(param[0]))ERROR("Path is empty!");
-  //if(!param[2] || !strlen(param[2]))ERROR("Type is empty!");
-  param[2] || (param[2]=ALL_TYPES);
+  {
+    struct tm t;
+    
+    d=param[0];
+    if(!d || !strlen(d))ERROR("Start time is empty!");
+    memset(&t, 0, sizeof(t));
+    d=strptime(d, strchr(d, '_')?TIME_FMT:DATE_FMT, &t);
+    if(!d)ERROR("Start time incorrect!");
+    start=mktime(&t);
+    
+    d=param[1];
+    if(!d || !strlen(d))ERROR("End time is empty!");
+    memset(&t, 0, sizeof(t));
+    d=strptime(d, strchr(d, '_')?TIME_FMT:DATE_FMT, &t);
+    if(!d)ERROR("End time incorrect!");
+    end=mktime(&t);
+  }
   
-  if(!param[3] || !strlen(param[3]))ERROR("Start time is empty!");
-  memset(&t, 0, sizeof(t));
-  prs=strptime(param[3], strchr(param[3], '_')?TIME_FMT:DATE_FMT, &t);
-  if(!prs)ERROR("Start time incorrect!");
-  start=mktime(&t);
+  {
+    d=param[2];
+    if(!d || !strlen(d))ERROR("Elements is empty!");
+  }
   
-  if(!param[4] || !strlen(param[4]))ERROR("End time is empty!");
-  memset(&t, 0, sizeof(t));
-  prs=strptime(param[4], strchr(param[4], '_')?TIME_FMT:DATE_FMT, &t);
-  if(!prs)ERROR("End time incorrect!");
-  end=mktime(&t);
-  
-  return _collectw_data(stream, param[0], param[1], param[2], &start, &end, &step);
+  FPrintF(stream, "[");
+  {
+    char elements[strlen(d)], *key, *val, t;
+    strcpy(elements, d);
+    
+    for(key=strtok(elements,","); key; key=strtok((char*)0,",")) {
+      val=strrchr(key, ':');
+      if(val){
+	val[0]='\0';
+	val++;
+      }else{
+	val="value";
+      }
+      
+      key==elements || FPrintF(stream, ",");
+      FPrintF(stream, "[");
+      
+      for(t=0; types[t]; t++){
+	t && FPrintF(stream, ",");
+	from=start; to=end; step=stepping;
+	_collectw_data(stream, key, val, types[t], &from, &to, &step);
+      }
+      
+      FPrintF(stream, "]");
+    }
+  }
+  FPrintF(stream, "]");
 }
 
 int collectw_time(Stream stream, const char **param){
