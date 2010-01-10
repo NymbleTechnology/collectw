@@ -44,7 +44,7 @@ $(function(){
 	    var x=[], y=[], l=[], c=[];
 	    
 	    for(var name in conf){
-		var d=conf[name].data;
+		var d=conf[name].data.avg;
 		var a=[]; for(var i=0;i<d.length;i++) a.push(i);
 		x.push(a);
 		//x.push(date.gen_interp(interval[0], interval[1], d.length));
@@ -53,41 +53,66 @@ $(function(){
 		conf[name].color && c.push(conf[name].color);
 	    }
 	    
-	    //alert([x,y]);
 	    ctx.append('<div id="diagram">').append('<div id="legend">');
 	    var dia=ctx.find('div#diagram'), leg=ctx.find('div#legend');
 	    var r=Raphael(dia.get(0));
 	    //r.circle(50, 50, 40);
 	    r.g.txtattr.font="10px 'Fontin Sans', Fontin-Sans, sans-serif";
 	    
-	    var g={x:60,y:20,w:dia.innerWidth()-80,h:dia.innerHeight()-40};
+	    var ey=r.g.axis_edges(y), ex=r.g.axis_edges(x);
+	    var g={x:60,y:20,w:dia.innerWidth()-100,h:dia.innerHeight()-60};
 	    
 	    leg.legend(title, l, c);
-	    var ag=r.g.linechart(g.x, g.y, g.w, g.h, x, y, {nostroke: false, width: leg.find('div#mark').css('border-width'), axis: "0 0 0 0", symbol: "", colors:c.length==y.length?c:null});
 	    
-	    var ey=r.g.axis_edges(y), sy=Math.floor((g.h)/20);
-	    var ex=r.g.axis_edges(x), sx=24;
-	    var date_labels=date.smart_gen_interp(interval[0], interval[1], sx);
-	    var ay=r.g.smart_axis(g.x+gutter, g.y+g.h-gutter, g.h-2*gutter, ey[0], ey[1], sy, 1);
-	    var ax=r.g.smart_axis(g.x+gutter, g.y+g.h-gutter, g.w-2*gutter, 0, 24, sx, 0, date_labels);
-	    ag.axis.push(ax, ay);
+	    var b=r.spinner(g.x+g.w/2, g.y+g.h/2, 20, 30, 12, 8, '#000').start();
 	    
-	    leg.nodes
-	    .bind('mouseenter', function(){
-		    var s=$(this);
-		    var l=ag.lines[s.attr('num')];
+	    setTimeout(function(){
+		    if(ey[0]<ey[1]){
+			var ag=r.g.linechart(g.x, g.y, g.w, g.h, x, y, {nostroke: false, width: linewidth, axis: "0 0 0 0", symbol: "", colors:c.length==y.length?c:null, gutter:0.001});
+		    }
+		    var sy=Math.floor((g.h)/20), sx=24;
+		    if(ey[0]<ey[1]){
+			var ay=r.g.smart_axis(g.x, g.y+g.h, g.h, ey[0], ey[1], sy, 1);
+			//ag.axis.push(ay);
+		    }
+		    var date_labels=date.smart_gen_interp(interval[0], interval[1], sx);
+		    var ax=r.g.smart_axis(g.x, g.y+g.h, g.w, 0, 24, sx, 0, date_labels);
+		    //ag.axis.push(ax);
 		    
-		    s.addClass('hover');
-		    l.toFront();
-		    l.attr({'stroke-width':hoverlinewidth});
-		})
-	    .bind('mouseleave', function(){
-		    var s=$(this);
-		    var l=ag.lines[s.attr('num')];
+		    var p=r.set();
+		    p.x=r.path('');
+		    p.y=r.path('');
+		    p.a=r.rect(g.x, g.y, g.w, g.h).attr({'fill':'#000','fill-opacity':0.0});
+		    p.push(p.x, p.y);
+		    p.hide();
 		    
-		    s.removeClass('hover');
-		    l.attr({'stroke-width':linewidth});
-		});
+		    $(p.a.node)
+			.hover(function(){p.show();}, function(){p.hide();})
+			.mousemove(function(e){
+				var d=dia.offset();
+				var c={x:e.pageX-d.left-g.x, y:e.pageY-d.top-g.y};
+				p.x.attr({path:'M'+g.x+' '+(g.y+c.y)+'L'+(g.x+g.w)+' '+(g.y+c.y)});
+				p.y.attr({path:'M'+(g.x+c.x)+' '+g.y+'L'+(g.x+c.x)+' '+(g.y+g.h)});
+			    });
+		    
+		    leg.nodes
+			.bind('mouseenter', function(){
+				var s=$(this);
+				var l=ag.lines[s.attr('num')];
+				
+				s.addClass('hover');
+				l.toFront();
+				l.attr({'stroke-width':hoverlinewidth});
+			    })
+			.bind('mouseleave', function(){
+				var s=$(this);
+				var l=ag.lines[s.attr('num')];
+				
+				s.removeClass('hover');
+				l.attr({'stroke-width':linewidth});
+			    });
+		    b.stop().remove();
+		}, 100);
 	}
 	
 	$.fn.legend=function(title, labels, colors){
@@ -102,60 +127,55 @@ $(function(){
 	    return this;
 	};
 	
-	var disp=function(ctx, title, conf){
-	    stat.text('Rendering view "'+title+'" ..');
-	    var range=interval.get_range();
-	    var requests=0; for(var name in conf) requests++;
-	    for(var name in conf){
-		(function(name){
-		    $.getJSON(json_url('data:'+name+'['+range[0]+','+range[1]+']'), function(json){
-			    var attr=name.match(/\{([^\{]+)\}/)[1];
-			    conf[name].data=json[attr];
-			    requests--;
-			    if(requests==0) draw(ctx, title, range, conf);
-			});
-		})(name);
-	    }
-	}
-	
-	var init_view=function(name, areas){
-	    var id=name.replace(/\ /g, '_');
-	    stat.text('Configuring view "'+name+'" ..');
+	var init_view=function(view_title, graphs){
+	    var view_id=name.replace(/\ /g, '_');
+	    stat.text('Configuring view "'+view_title+'" ..');
 	    
 	    tabs.append('<li>');
 	    var tab=tabs.find('li:last');
-	    tab.text(name);
-
+	    tab.text(view_title);
+	    
 	    var redraw=function(){
-		var n=0; for(var title in areas)n++;
+		var n=0; for(var title in graphs)n++;
 		var w=view.innerWidth(), h=view.innerHeight(), gh=h/n;
-		view.empty();
-		for(var title in areas){
-		    view.append('<div id="graph">');
-		    var elem=view.find('div:last');
-		    elem.width(w); elem.height(gh);
-		    disp(elem, title, areas[title]);
+		
+		/* make query */
+		var range=interval.get_range();
+		var elems=[];
+		for(var graph_title in graphs){
+		    for(var line_id in graphs[graph_title]){
+			elems.push(line_id);
+		    }
 		}
+		/* send query */
+		range[1]=date.tostr(date.parse(range[1])+(60*60*24));
+		$.getJSON(json_url('data:'+'['+range.join(',')+']'+'{'+elems.join(',')+'}'), function(json){
+			stat.text('Rendering view "'+view_title+'" ..');
+			view.empty();
+			
+			var i=0;
+			for(var graph_title in graphs){
+			    var lines=graphs[graph_title];
+			    
+			    for(var line_id in lines){
+				var e=json[i];
+				lines[line_id].data={avg:e[0],min:e[1],max:e[2]};
+				i++;
+			    }
+			    
+			    view.append('<div id="graph">');
+			    var graph=view.find('div:last');
+			    graph.width(w); graph.height(gh);
+			    
+			    draw(graph, graph_title, range, lines);
+			}
+		    });
 	    };
 	    
 	    tab.bind('click', redraw);
 	    interval.bind('change', redraw);
-
-	    /*
-	    var graph=ctx.find('div#graph').css({
-		    '-moz-border-radius':'10px',
-		    '-webkit-border-radius':'10px',
-		    '-webkit-box-shadow':'0 1px 3px #666',
-		    'background':'#ddd',
-		    'margin':'0 auto'
-		}).width(600).height(400);
-	    var r=Raphael("graph");
-	    r.g.txtattr.font="10px 'Fontin Sans', Fontin-Sans, sans-serif";
-	    */
-	    //setTimeout(init, 100);
-	    //setTimeout(draw, 100);
 	}
-
+	
 	var init=function(){
 	    init_date();
 	    stat.text('Loading user config..');
@@ -165,7 +185,7 @@ $(function(){
 		    tabs.find('li:first').click();
 		});
 	}
-
+	
 	var body=$('body');
 	body.append('<div id="tabs"><ul>');
 	body.find('div#tabs').append('<span>');
@@ -178,7 +198,6 @@ $(function(){
 	var interval=body.find('div#tabs > span');
 	interval.set_range=function(d){
 	    if(typeof d=='string') d=[d,d];
-	    if(d[0]==d[1])d[1]=date.tostr(date.parse(d[0])+60*60*24);
 	    this.html(d.join(' ÷ '));
 	    this.trigger('change');
 	}
@@ -216,7 +235,6 @@ $(function(){
 		    pick.css('position', 'absolute');
 		});
 	}
-
-	setTimeout(init, 100);
-
+	
+	setTimeout(init, 1);
     });
