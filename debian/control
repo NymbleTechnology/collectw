@@ -1,0 +1,13 @@
+Source: collectw
+Section: admin
+Priority: optional
+Maintainer: Phoenix Kayo <kayo.k11.4@gmail.com>
+Build-Depends: debhelper (>= 7), po-debconf, librrd-dev, libfcgi-dev
+Standards-Version: 3.8.2
+Homepage: http://collectw.sf.net
+
+Package: collectw
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${php5:Depends}, ucf
+Description: Asynchronous Collectd Web-based UI.
+  .

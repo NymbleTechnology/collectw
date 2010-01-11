@@ -1,0 +1,26 @@
+Template: collectw/title
+Type: title
+_Description: Configuring Collectw
+
+Template: collectw/site_host
+Type: string
+_Description: Web UI host:
+ Leave field blank for accessing with any host.
+
+Template: collectw/site_port    
+Type: string
+Default: 40011
+_Description: Web UI port:
+ 40011 port by default.
+
+Template: collectw/admin_username
+Type: string
+Default: admin
+_Description: An admin user for web UI:
+ Username for web access.
+
+Template: collectw/admin_password
+Type: string
+Default: collectw
+_Description: A password for web UI:
+ Password of user which have access.

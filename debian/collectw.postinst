@@ -1,0 +1,48 @@
+#!/bin/sh -e
+
+# Source debconf library.
+PATH=$PATH:.
+if [ -e confmodule ]; then
+  . confmodule
+else
+  . /usr/share/debconf/confmodule
+fi
+
+echo "Collectw installed.."
+
+www=/usr/share/collectw
+target=collectw
+lstn=7000
+
+ngx_avl=/etc/nginx/sites-available
+ngx_enb=/etc/nginx/sites-enabled
+
+db_get collectw/admin_username && user="$RET"
+db_get collectw/admin_password && pass="$RET"
+db_get collectw/http_host && host="$RET"
+db_get collectw/http_port && port="$RET"
+
+[ -d $ngx_avl ] && {
+  {
+    echo "# CollectW server config.."
+    echo "server {"
+    [ -n "$port" ] && echo "  listen $port;"
+    [ -n "$host" ] && echo "  server_name $host;"
+    echo '  root $www;'
+    echo '  index index.html;'
+    echo '  location ~* ^.+\.(css|js|png|ico)$$ {'
+    echo '    access_log off;'
+    echo '    expires 31d;'
+    echo '    add_header Last-Modified: \$date_gmt;'
+    echo '  }'
+    echo '  location /$target {'
+    echo '    fastcgi_pass $lstn;'
+    echo '    include fastcgi_params;'
+    echo '  }'
+    echo '}'
+  } > $ngx_avl/$target
+
+  [ -d $ngx_enb ] && {
+    ln -s $ngx_avl/$target $ngx_enb/$target
+  }
+}

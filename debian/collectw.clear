@@ -1,0 +1,13 @@
+#!/bin/sh -e
+
+# Source debconf library.
+PATH=$PATH:.
+if [ -e confmodule ]; then
+  . confmodule
+else
+  . /usr/share/debconf/confmodule
+fi
+
+for i in admin_username admin_password site_host site_port; do
+  db_fset collectw/$i seen false
+done

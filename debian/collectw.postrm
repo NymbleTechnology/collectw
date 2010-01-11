@@ -1,0 +1,23 @@
+#!/bin/sh -e
+
+# Source debconf library.
+PATH=$PATH:.
+if [ -e confmodule ]; then
+  . confmodule
+else
+  . /usr/share/debconf/confmodule
+fi
+
+echo "Collectw removed.."
+
+target=collectw
+ngx_avl=/etc/nginx/sites-available
+ngx_enb=/etc/nginx/sites-enabled
+
+[ -d $ngx_avl ] && {
+  rm -f $ngx_avl/$target
+}
+
+[ -d $ngx_enb ] && {
+  rm -f $ngx_enb/$target
+}
