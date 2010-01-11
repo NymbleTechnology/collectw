@@ -48,12 +48,15 @@ div#tabs ul {
 	text-align: center;
 }
 
+div#tabs > ul li a { color:#fff; }
+
 div#tabs > ul li {
                    list-style-type: none;
                    list-style-image: none;
                    float: left;
                    padding: 0;
                    margin: 0 0 0 0;
+                   margin-right: 10px;
                    vertical-align: middle;
                    height: inherit;
                    color: #eee;
