@@ -6,7 +6,7 @@
  */
 
 $(function(){
-	var json_url=function(action){return '/collectw?'+action;};
+	var json_url=demo_mode?function(action){return 'collectw-'+action.split(':')[0]+'.json';}:function(action){return '/collectw?'+action;};
 	
 	var info=function(){
 	    $.getJSON(json_url('info'), function(json){
@@ -171,6 +171,7 @@ $(function(){
 	    $.getJSON(json_url('load'), function(json){
 		    stat.append(' done');
 		    for(var name in json)init_view(name, json[name]);
+		    if(demo_mode)tabs.append('<li><a href="http://sourceforge.net/projects/collectw/">SourceForge Project Page</a></li>');
 		    tabs.find('li:first').click();
 		});
 	}

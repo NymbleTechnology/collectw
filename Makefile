@@ -72,7 +72,8 @@ CFLAGS+=-D COLLECTW_USER_CONFIG=\"$(user-config)\" -D COLLECTW_INTERFACE=\"sapi_
 add-doctype=echo '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">';
 add-contype=echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
 add-title=echo '<title>$(title)</title>';
-add-ecm=echo '<script type="text/javascript" src="$(1)"></script>';
+add-ecm=echo '<script type="text/ecmascript" src="$(1)"></script>';
+add-inline-ecm=echo '<script type="text/ecmascript">$(1)</script>';
 add-css=echo '<link rel="stylesheet" href="$(1)" type="text/css" />';
 add-div=echo '<div id="$(1)">$(2)</div>';
 
@@ -86,6 +87,9 @@ $(target): $(objects)
 
 $(html-object):
 	@{ $(call add-doctype) echo '<html><head>'; $(call add-contype) } > $@
+ifdef --demo-mode
+	@{ $(call add-inline-ecm,var demo_mode=true;) } >> $@
+endif
 ifdef --devel-mode
 	@{ $(foreach f,$(css-sources),$(call add-css,$(f))) } >> $@
 	@{ $(foreach f,$(ecm-sources),$(call add-ecm,$(f))) } >> $@
