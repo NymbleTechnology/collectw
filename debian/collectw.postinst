@@ -20,32 +20,6 @@ ngx_enb="/etc/nginx/sites-enabled"
 db_get collectw/http_host && host="$RET"
 db_get collectw/http_port && port="$RET"
 
-# configure nginx
-[ -d "$ngx_avl" ] && {
-  {
-    echo "# CollectW server config.."
-    echo "server {"
-    [ -n "$port" ] && echo '  listen '"$port"';'
-    [ -n "$host" ] && echo '  server_name '"$host"';'
-    echo '  root '"$www"';'
-    echo '  index index.html;'
-    echo '  location ~* ^.+\.(css|js|png|ico)$$ {'
-    echo '    access_log off;'
-    echo '    expires 31d;'
-    echo '    add_header Last-Modified: $date_gmt;'
-    echo '  }'
-    echo '  location /'"$target"' {'
-    echo '    fastcgi_pass '"$lstn"';'
-    echo '    include fastcgi_params;'
-    echo '  }'
-    echo '}'
-  } > "$ngx_avl/$target"
-
-  [ -d "$ngx_enb" ] && {
-    ln -s "$ngx_avl/$target" "$ngx_enb/$target"
-  }
-}
-
 # make default user config
 hn="$(hostname)"
 etc_dir="/etc/collectw"
@@ -69,6 +43,57 @@ etc_cnf="$etc_dir/$target"
     echo "  }"
     echo "}"
   } > $etc_cnf
+}
+
+# Automatically added by dh_installinit
+if [ -x "/etc/init.d/collectw" ]; then
+        update-rc.d collectw defaults >/dev/null
+        if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+                invoke-rc.d collectw start || exit $?
+        else
+                /etc/init.d/collectw start || exit $?
+        fi
+fi
+# End automatically added section
+
+# configure nginx
+[ -d "$ngx_avl" ] && {
+  nginx_need_reload=0
+  [ -e "$ngx_avl/$target" ] || {
+    echo "# CollectW server config.."
+    echo "server {"
+    [ -n "$port" ] && echo '  listen '"$port"';'
+    [ -n "$host" ] && echo '  server_name '"$host"';'
+    echo '  root '"$www"';'
+    echo '  index index.html;'
+    echo '  location ~* ^.+\.(css|js|png|ico)$$ {'
+    echo '    access_log off;'
+    echo '    expires 31d;'
+    echo '    add_header Last-Modified: $date_gmt;'
+    echo '  }'
+    echo '  location /'"$target"' {'
+    echo '    fastcgi_pass '"$lstn"';'
+    echo '    include fastcgi_params;'
+    echo '  }'
+    echo '}'
+    nginx_need_reload=1
+  } > "$ngx_avl/$target"
+
+  [ -d "$ngx_enb" ] && {
+    [ -e "$ngx_enb/$target" ] || {
+      ln -s "$ngx_avl/$target" "$ngx_enb/$target"
+      nginx_need_reload=1
+    }
+  }
+
+  # reload nginx
+  if [ -x "/etc/init.d/nginx" -a "$nginx_need_reload" == "1" ]; then
+    if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+      invoke-rc.d nginx reload || exit $?
+    else
+      /etc/init.d/nginx reload || exit $?
+    fi
+  fi
 }
 
 # final notify
