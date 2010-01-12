@@ -28,7 +28,7 @@ proper:
 binary-arch: proper build install
 	dh_testdir
 	dh_testroot
-	dh_installinit --name=collectw --onlyscripts
+	dh_installinit --name=collectw --restart-after-upgrade
 	dh_strip --dbg-package=collectw-dbg
 	dh_installchangelogs
 	dh_installdocs
