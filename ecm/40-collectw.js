@@ -203,7 +203,7 @@ $(function(){
 		    d=interval.get_range();
 		    var cal=body.find('div#cal');
 		    cal.DatePicker({
-			    flat: true,
+			        flat: true,
 				format:'Y-m-d',
 				date: d,
 				current: d[0],
@@ -211,9 +211,9 @@ $(function(){
 				mode: 'range',
 				starts: 1,
 				onChange: function(formated, dates){
-				interval.set_range(formated);
-			    },
-				});
+				  interval.set_range(formated);
+			        }
+			});
 		    var pick=cal.find('div.datepicker');
 		    var state=false;
 		    interval.bind('click', function(){

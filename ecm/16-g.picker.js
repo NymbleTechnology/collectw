@@ -17,7 +17,7 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
   opt.plines=opt.plines||{x:1,y:1};
   opt.popup=opt.popup||'none'; //blob,
   opt.popup_delay=typeof opt.popup_delay=='number'?opt.popup_delay:1000;
-
+  
   var p=r.set();
   if(opt.plines.x){
     p.xline=r.path('');
@@ -40,7 +40,8 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
 	popup.args={x:x, y:y, t:t};
       }else{
 	var a=popup.args;
-	popup.object=r.g[opt.popup](a.x, a.y, a.t);
+	popup.object=r.g[opt.popup](a.x, a.y-2, a.t);
+	p.area.toFront();
       }
     },
     hide:function(){
@@ -55,9 +56,9 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
       }
     }
   };
-
+  
   $(p.area.node)
-    .hover(function(){p.show();p.area.toFront()},function(){popup.hide();p.hide();})
+    .hover(function(){p.show();p.area.toFront();},function(){popup.hide();p.hide();})
     .mousemove(function(e){
 		 var d=opt.holder.offset();
 		 var c={x:e.pageX-d.left, y:e.pageY-d.top};
