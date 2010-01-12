@@ -78,11 +78,12 @@ $(function(){
 		    var date_labels=date.smart_gen_interp(interval[0], interval[1], sx);
 		    var ax=r.g.smart_axis(g.x, g.y+g.h, g.w, 0, 24, sx, 0, date_labels);
 		    //ag.axis.push(ax);
+		    var pline_style={stroke:'#000','stroke-dasharray':'-','stroke-linecap':'butt','stroke-opacity':0.5};
 		    
 		    r.g.picker(g.x, g.y, g.w, g.h, [date.parse(interval[0]), date.parse(interval[1])], ey, 
-			       {holder:dia, popup:'popup', gutter:0, format:function(v, e){
+			       {holder:dia, popup:'popup', plines:{x:pline_style,y:pline_style}, gutter:0, format:function(v, e){
 				       return $.short_number(v.y, 2)+' at '+date.tostr(Math.round(v.x)).replace(/_/g, ' ');
-			    }});
+			     }});
 		    
 		    leg.nodes
 			.bind('mouseenter', function(){
@@ -110,7 +111,7 @@ $(function(){
 	    for(var i in labels){
 		var m=colors[i].match(/hsb\s*\(\s*([\.\d]+)\s*\,\s*([\.\d]+)\s*\,\s*([\.\d]+)\s*\)/);
 		m=m?Raphael.hsb2rgb(m[1],m[2],m[3]).hex:colors[i];
-		this.append('<div id="node" num="'+i+'"><div id="mark" style="background:'+m+'"></div>'+labels[i]);
+		this.append('<div id="node" num="'+i+'"><div id="mark" style="background:'+m+'"></div>'+labels[i]+'</div>');
 	    }
 	    this.nodes=this.find('div#node');
 	    return this;
@@ -120,9 +121,8 @@ $(function(){
 	    var view_id=name.replace(/\ /g, '_');
 	    stat.text('Configuring view "'+view_title+'" ..');
 	    
-	    tabs.append('<li>');
+	    tabs.append('<li>'+view_title+'</li>');
 	    var tab=tabs.find('li:last');
-	    tab.text(view_title);
 	    
 	    var redraw=function(){
 		var n=0; for(var title in graphs)n++;
@@ -152,7 +152,7 @@ $(function(){
 				i++;
 			    }
 			    
-			    view.append('<div id="graph">');
+			    view.append('<div id="graph"></div>');
 			    var graph=view.find('div:last');
 			    graph.width(w); graph.height(gh);
 			    
@@ -177,22 +177,21 @@ $(function(){
 	}
 	
 	var body=$('body');
-	body.append('<div id="tabs"><ul>');
-	body.find('div#tabs').append('<span>');
-	body.append('<div id="cal">');
-	body.append('<div id="view">');
-	body.append('<div id="stat">');
+	body.append('<div id="tabs"><ul></ul><span></span></div>');
+	body.append('<div id="cal"></div>');
+	body.append('<div id="view"></div>');
+	body.append('<div id="stat"></div>');
 	var stat=body.find('#stat'); /* for debug */ window.stat=stat;
 	stat.text('Loading..');
 	var tabs=body.find('#tabs ul');
 	var interval=body.find('div#tabs > span');
 	interval.set_range=function(d){
 	    if(typeof d=='string') d=[d,d];
-	    this.html(d.join(' ÷ '));
-	    this.trigger('change');
+	    interval.html(d.join(' ÷ '));
+	    interval.trigger('change');
 	}
 	interval.get_range=function(){
-	    var d=this.html().split(' ÷ ');
+	    var d=interval.html().split(' ÷ ');
 	    return d;
 	}
 	var view=body.find('div#view');

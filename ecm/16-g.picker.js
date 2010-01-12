@@ -14,23 +14,25 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
   opt.gutter=typeof opt.gutter=='number'?opt.gutter:10;
   opt.format=typeof opt.format=='function'?opt.format:function(v, e){return v.x+' '+v.y;};
   opt.holder=opt.holder||r.node;
-  opt.plines=opt.plines||{x:1,y:1};
+  opt.plines=opt.plines||{x:{},y:{}};
   opt.popup=opt.popup||'none'; //blob,
   opt.popup_delay=typeof opt.popup_delay=='number'?opt.popup_delay:1000;
   
   var p=r.set();
   if(opt.plines.x){
     p.xline=r.path('');
+    p.xline.attr(opt.plines.x);
     p.push(p.xline);
   }
   if(opt.plines.y){
     p.yline=r.path('');
+    p.yline.attr(opt.plines.y);
     p.push(p.yline);
   }
 
   p.area=r.rect(gx, gy, gw, gh).attr({'fill':'#000','fill-opacity':0.0,'stroke':'none'});
   p.hide();
-
+  
   var popup={
     show:function(x, y, t){
       if(opt.popup=='none')return;
@@ -57,9 +59,28 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
     }
   };
   
-  $(p.area.node)
-    .hover(function(){p.show();p.area.toFront();},function(){popup.hide();p.hide();})
-    .mousemove(function(e){
+  var outevt=$.browser=='opera'?function(cx, cy){ /* fucked opera :-[ */
+      if(!(cx>=gx&&cx<gx+gw&&cy>=gy&&cy<gy+gh))$a.trigger('mouseleave');
+  }:function(){};
+  
+  var $a=$(p.area.node)
+  .mouseenter(function(){
+	  /*p.show();
+	    p.toFront();*/
+	  p.xline.show();
+	  p.xline.toFront();
+	  p.yline.show();
+	  p.yline.toFront();
+	  
+	  p.area.toFront();
+      })
+  .mouseleave(function(){
+	  popup.hide();
+	  /*p.hide();*/
+	  p.xline.hide();
+	  p.yline.hide();
+      })
+  .mousemove(function(e){
 		 var d=opt.holder.offset();
 		 var c={x:e.pageX-d.left, y:e.pageY-d.top};
 		 if(p.xline)p.xline.attr({path:'M'+gx+' '+c.y+'L'+(gx+gw)+' '+c.y});
@@ -67,6 +88,8 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
 		 /* update popup */
 		 var v={x:(c.x-gx)*(ex[1]-ex[0])/gw+ex[0], y:ey[1]-(c.y-gy)*(ey[1]-ey[0])/gh};
 		 popup.show(c.x, c.y, opt.format(v, {x:ex, y:ey}));
+		 outevt(c.x, c.y);
 	       });
+  
   return p;
 };
