@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 clean::
+	make clean
 	dh_clean
 	rm -f stamp/*
 	rm -f debian/collectw.substvars
@@ -10,8 +11,11 @@ clean::
 .PRECIOUS:
 
 build:
+	./configure --prefix=/usr --enable-debug --with-user-config=/etc/collectw/user-config.json
+	make
 
 install:
+	make --prefix=debian/collectw/usr install
 
 proper:
 	dh_clean
@@ -19,12 +23,10 @@ proper:
 binary-arch: proper build install
 	dh_testdir
 	dh_testroot
-#	dh_installinit --name=collectw --onlyscripts --restart-after-upgrade
-#	dh_strip --dbg-package=collectw-dbg
+	dh_installinit --name=collectw --onlyscripts
+	dh_strip --dbg-package=collectw-dbg
 	dh_installchangelogs
 	dh_installdocs
-	dh_installexamples
-	dh_installman
 	dh_installdebconf -n
 	dh_compress
 	dh_fixperms

@@ -1,6 +1,10 @@
 Template: collectw/title
 Type: title
-_Description: Configuring Collectw
+_Description: Configuring CollectW
+
+Template: collectw/success_title
+Type: title
+_Description: CollectW configured successfully!
 
 Template: collectw/site_host
 Type: string
@@ -24,3 +28,8 @@ Type: string
 Default: collectw
 _Description: A password for web UI:
  Password of user which have access.
+
+Template: collectw/config_success
+Type: note
+_Description: You can see collectd's statistics on ${location}.
+ Also you may edit ${userconf} for more advanced usage.

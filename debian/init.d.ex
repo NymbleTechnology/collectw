@@ -2,6 +2,8 @@
 
 name=collectw
 
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
 exec=/usr/bin/$name
 pidf=/var/run/$name.pid
 logf=/var/log/$name.log
@@ -10,7 +12,7 @@ logf=/var/log/$name.log
     . ./default-collectw
     true
 } || {
-    [ -f /etc/default/collectw ] && . /etc/default/collectw
+    [ -f /etc/default/$name ] && . /etc/default/$name
 }
 
 [ -x $exec ] || {

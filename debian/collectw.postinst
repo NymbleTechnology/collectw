@@ -8,41 +8,77 @@ else
   . /usr/share/debconf/confmodule
 fi
 
-echo "Collectw installed.."
+target="collectw"
+lstn="localhost:7000"
+www="/usr/share/$target"
 
-www=/usr/share/collectw
-target=collectw
-lstn=7000
+ngx_avl="/etc/nginx/sites-available"
+ngx_enb="/etc/nginx/sites-enabled"
 
-ngx_avl=/etc/nginx/sites-available
-ngx_enb=/etc/nginx/sites-enabled
-
-db_get collectw/admin_username && user="$RET"
-db_get collectw/admin_password && pass="$RET"
+#db_get collectw/admin_username && user="$RET"
+#db_get collectw/admin_password && pass="$RET"
 db_get collectw/http_host && host="$RET"
 db_get collectw/http_port && port="$RET"
 
-[ -d $ngx_avl ] && {
+# configure nginx
+[ -d "$ngx_avl" ] && {
   {
     echo "# CollectW server config.."
     echo "server {"
-    [ -n "$port" ] && echo "  listen $port;"
-    [ -n "$host" ] && echo "  server_name $host;"
-    echo '  root $www;'
+    [ -n "$port" ] && echo '  listen '"$port"';'
+    [ -n "$host" ] && echo '  server_name '"$host"';'
+    echo '  root '"$www"';'
     echo '  index index.html;'
     echo '  location ~* ^.+\.(css|js|png|ico)$$ {'
     echo '    access_log off;'
     echo '    expires 31d;'
-    echo '    add_header Last-Modified: \$date_gmt;'
+    echo '    add_header Last-Modified: $date_gmt;'
     echo '  }'
-    echo '  location /$target {'
-    echo '    fastcgi_pass $lstn;'
+    echo '  location /'"$target"' {'
+    echo '    fastcgi_pass '"$lstn"';'
     echo '    include fastcgi_params;'
     echo '  }'
     echo '}'
-  } > $ngx_avl/$target
+  } > "$ngx_avl/$target"
 
-  [ -d $ngx_enb ] && {
-    ln -s $ngx_avl/$target $ngx_enb/$target
+  [ -d "$ngx_enb" ] && {
+    ln -s "$ngx_avl/$target" "$ngx_enb/$target"
   }
 }
+
+# make default user config
+hn="$(hostname)"
+etc_dir="/etc/collectw"
+etc_cnf="$etc_dir/$target"
+
+[ -f "$etc_cnf" ] || {
+  mkdir -p "$etc_dir"
+  {
+    echo "{"
+    echo "  'Default View':{"
+    echo "    'CPU':{"
+    echo "      '$hn/cpu-0/cpu-system':{title:'System',color:'#4075c2'},"
+    echo "      '$hn/cpu-0/cpu-user':{title:'User',color:'#bf5a2f'}"
+    echo "    },"
+    echo "    'Memory':{"
+    echo "      '$hn/memory/memory-free':{title:'Free',color:'#bf5a2f'},"
+    echo "      '$hn/memory/memory-used':{title:'Used',color:'#4075c2'},"
+    echo "      '$hn/memory/memory-buffered':{title:'Buffered',color:'#a2bf2f'},"
+    echo "      '$hn/memory/memory-cached':{title:'Cached',color:'#c7b25d'}"
+    echo "    }"
+    echo "  }"
+    echo "}"
+  } > $etc_cnf
+}
+
+# final notify
+db_settitle collectw/success_title
+
+location="http://${host:-$(hostname)}${port:+:}${port}/"
+
+db_subst collectw/config_success location "$location"
+db_subst collectw/config_success userconf "$etc_cnf"
+db_input high collectw/config_success
+db_go || true
+
+#db_stop

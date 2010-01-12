@@ -8,16 +8,33 @@ else
   . /usr/share/debconf/confmodule
 fi
 
-echo "Collectw removed.."
+target="collectw"
 
-target=collectw
-ngx_avl=/etc/nginx/sites-available
-ngx_enb=/etc/nginx/sites-enabled
+ngx_avl="/etc/nginx/sites-available"
+ngx_enb="/etc/nginx/sites-enabled"
 
-[ -d $ngx_avl ] && {
-  rm -f $ngx_avl/$target
+# disable nginx config
+[ -e "$ngx_enb/$target" ] && {
+  rm -f "$ngx_enb/$target"
 }
 
-[ -d $ngx_enb ] && {
-  rm -f $ngx_enb/$target
+# make default user config
+
+[ "$1" = "purge" ] && {
+  hn="$(hostname)"
+  etc_dir="/etc/collectw"
+  etc_cnf="$etc_dir/$target"
+
+  # remove nginx config
+  [ -f "$ngx_avl/$target" ] && {
+    rm -f "$ngx_avl/$target"
+  }
+
+  # purge user config
+  [ -d "$etc_dir" ] || {
+    rm -rf "$etc_dir"
+  }
+
+  # purging debconf data
+  db_purge || true
 }
