@@ -8,6 +8,14 @@ Homepage: http://collectw.sf.net
 
 Package: collectw
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${php5:Depends}, ucf
-Description: Asynchronous Collectd Web-based UI.
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Asynchronous Web-based UI for Collectd.
+  .
+
+Package: collectw-dbg
+Section: debug
+Recommends: gdb
+Architecture: any
+Depends: collectw (= ${Source-Version})
+Description: Debug symbols for Asynchronous Web-based UI for Collectd.
   .

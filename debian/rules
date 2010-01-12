@@ -11,11 +11,16 @@ clean::
 .PRECIOUS:
 
 build:
-	./configure --prefix=/usr --enable-debug --with-user-config=/etc/collectw/user-config.json
+	./configure --prefix=debian/collectw/usr --enable-debug --with-user-config=/etc/collectw/user-config.json
 	make
 
-install:
-	make --prefix=debian/collectw/usr install
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	
+	make install
 
 proper:
 	dh_clean
