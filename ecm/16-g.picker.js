@@ -49,8 +49,8 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
     hide:function(){
       if(opt.popup=='none')return;
       if(popup.object){
-	popup.object.remove();
-	popup.object=undefined;
+	  popup.object.remove();
+	  popup.object=undefined;
       }
       if(popup.timer){
 	clearTimeout(popup.timer);
@@ -65,8 +65,6 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
   
   var $a=$(p.area.node)
   .mouseenter(function(){
-	  /*p.show();
-	    p.toFront();*/
 	  p.xline.show();
 	  p.xline.toFront();
 	  p.yline.show();
@@ -76,7 +74,6 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
       })
   .mouseleave(function(){
 	  popup.hide();
-	  /*p.hide();*/
 	  p.xline.hide();
 	  p.yline.hide();
       })

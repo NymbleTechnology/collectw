@@ -19,95 +19,77 @@
     return e;
   };
   var short_label=$.short_number;
-  /* t: t,b,l,r */
-  var axis=function(x, y, w, h, t, e){
-    var d=[SELF.date.parse(e[0]), SELF.date.parse(e[1])];
-    var date_mode = d[0]!=null && d[1]!=null;
-    var space=10;
-    var label=[];
-    /*
-    var gutter=10;
-    var a=[0,0,0,0];
-    switch(t){
-    case 'l': a=[x+gutter,   y+gutter,   0, h-2*gutter]; break;
-    case 'r': a=[x+w-gutter, y+gutter,   0, h-2*gutter]; break;
-    case 't': a=[x+gutter,   y+gutter,   w-2*gutter, 0]; break;
-    case 'b': a=[x+gutter,   y+h-gutter, w-2*gutter, 0]; break;
-    }
-    a[2]+=a[0];
-    a[3]+=a[1];
-    var axis = this.set();
-    axis.push(this.path('M'+a[0]+' '+a[1]+'L'+a[2]+' '+a[3]));
-    */
-    var probe_label=this.text(0, 0, "00:00");
-    var label_length=probe_label.getBBox().height+space;
-    probe_label.remove();
-
-    var axis=this.g.axis();
-    return axis;
+  var upof=function(ev, l){
+      ev.push(ev[1]-ev[0]);
+      var m=Number(ev[2]).toExponential(0).toString().split('e');
+      for(var i=0;i<2;i++)m[i]=parseInt(m[i], 10);
+      if(m[0]<5)m[1]--; // fix for small delta
+      var r=Math.pow(10, m[1]), rv={u:[Math.ceil(ev[0]/r),Math.floor(ev[1]/r)]};
+      rv.e=[rv.u[0]*r, rv.u[1]*r];
+      rv.u.push(rv.u[1]-rv.u[0]);
+      rv.e.push(rv.e[1]-rv.e[0]);
+      // calc scale coords
+      rv.p=l/ev[2];// calc num of pixels per delta value
+      rv.c=(rv.e[0]-ev[0])*rv.p;// calc coord
+      rv.l=(ev[1]-rv.e[1])*rv.p+rv.c;// calc length
+      // calc num of steps
+      for(rv.s=rv.u[2];rv.s<5;rv.s*=2){}
+      return rv;
   };
-  var axis=function (x, y, length, from, to, steps, orientation, labels, type, dashsize) {
-        dashsize = dashsize == null ? 2 : dashsize;
-        type = type || "t";
-        steps = steps || 10;
-        var path = type == "|" || type == " " ? ["M", x + .5, y, "l", 0, .001] : orientation == 1 || orientation == 3 ? ["M", x + .5, y, "l", 0, -length] : ["M", x, y + .5, "l", length, 0],
-            ends = this.g.snapEnds(from, to, steps),
-            f = ends.from,
-            t = ends.to,
-            i = ends.power,
-            j = 0,
-	    text = this.set(),
-	    d = (t - f) / steps;
-        var label = f,
-	    rnd = i > 0 ? i : 0,
-            dx = length / steps;
-        if (+orientation == 1 || +orientation == 3) {
-            var Y = y,
-                addon = (orientation - 1 ? 1 : -1) * (dashsize + 3 + !!(orientation - 1));
-            while (Y >= y - length) {
-                type != "-" && type != " " && (path = path.concat(["M", x - (type == "+" || type == "|" ? dashsize : !(orientation - 1) * dashsize * 2), Y + .5, "l", dashsize * 2 + 1, 0]));
-                text.push(this.text(x + addon, Y, (labels && labels[j++]) || short_label(Math.round(label) == label ? label : +label.toFixed(rnd))).attr(this.g.txtattr).attr({"text-anchor": orientation - 1 ? "start" : "end"}));
-                label += d;
-                Y -= dx;
-            }
-            if (Math.round(Y + dx - (y - length))) {
-                type != "-" && type != " " && (path = path.concat(["M", x - (type == "+" || type == "|" ? dashsize : !(orientation - 1) * dashsize * 2), y - length + .5, "l", dashsize * 2 + 1, 0]));
-                text.push(this.text(x + addon, y - length, (labels && labels[j]) || short_label(Math.round(label) == label ? label : +label.toFixed(rnd))).attr(this.g.txtattr).attr({"text-anchor": orientation - 1 ? "start" : "end"}));
-            }
-        } else {
-            var X = x,
-                label = f,
-                rnd = i > 0 ? i : 0,
-                addon = (orientation ? -1 : 1) * (dashsize + 9 + !orientation),
-                dx = length / steps,
-                txt = 0,
-                prev = 0;
-            while (X <= x + length) {
-                type != "-" && type != " " && (path = path.concat(["M", X + .5, y - (type == "+" ? dashsize : !!orientation * dashsize * 2), "l", 0, dashsize * 2 + 1]));
-                text.push(txt = this.text(X, y + addon, (labels && labels[j++]) || short_label(Math.round(label) == label ? label : +label.toFixed(rnd))).attr(this.g.txtattr));
-                var bb = txt.getBBox();
-                if (prev >= bb.x - 5) {
-                    text.pop(text.length - 1).remove();
-                } else {
-                    prev = bb.x + bb.width;
-                }
-                label += d;
-                X += dx;
-            }
-            if (Math.round(X - dx - x - length)) {
-                type != "-" && type != " " && (path = path.concat(["M", x + length + .5, y - (type == "+" ? dashsize : !!orientation * dashsize * 2), "l", 0, dashsize * 2 + 1]));
-                text.push(this.text(x + length, y + addon, (labels && labels[j]) || short_label(Math.round(label) == label ? label : +label.toFixed(rnd))).attr(this.g.txtattr));
-            }
-        }
-        var res = this.path(path);
-        res.text = text;
-        res.all = this.set([res, text]);
-        res.remove = function () {
-            this.text.remove();
-            this.constructor.prototype.remove.call(this);
-        };
-        return res;
-    };
+  
+  var axis=function (x, y, length, values, orientation, label, steps, labels, type, dashsize) {
+      var r=this, ev=edges(values), line=[[x,y]];
+      
+      if(typeof orientation!='number')orientation=0;
+      
+      switch(orientation){
+      case 0: line.push([+length,]); break;
+      case 1: line.push([0,-length]); break;
+      case 2: line.push([-length,0]); break;
+      case 3: line.push([0,+length]); break;
+      }
+      line[1][0]+=line[0][0]; line[1][1]+=line[0][1];
+      var axis='M'+line[0][0]+' '+line[0][1]+'L'+line[1][0]+' '+line[1][1];
+      
+      if(!steps){
+	  var rv=upof(ev, length);
+	  steps=rv.s;
+	  if(!labels){
+	      labels=[];
+	      var p=rv.e[2]/steps;
+	      for(var i=0;i<=steps;i++)labels.push(short_label(rv.e[0]+p*i));
+	  }
+	  switch(orientation){
+	  case 0: x+=rv.c; break;
+	  case 1: y-=rv.c; break;
+	  case 2: x-=rv.c; break;
+	  case 3: y+=rv.c; break;
+	  }
+	  length-=rv.l;
+      }
+      
+      var res;
+      
+      if(ev[0]<ev[1]){
+	  res=r.g.axis(x, y, length, ev[0], ev[1], steps, orientation, labels, type, dashsize);
+	  res.attr({path:res.attr('path')+axis});
+	  
+	  res.remove = function () {
+	      this.text.remove();
+	      this.line.remove();
+	      this.constructor.prototype.remove.call(this);
+	  };
+      }else{
+	  res=r.path(axis);
+      }
+      
+      if(label){
+	  
+      }
+      
+      return res;
+  }
+  
   Raphael.fn.g.axis_edges=edges;
   Raphael.fn.g.smart_axis=axis;
 })();

@@ -70,14 +70,13 @@ $(function(){
 		    if(ey[0]<ey[1]){
 			var ag=r.g.linechart(g.x, g.y, g.w, g.h, x, y, {nostroke: false, width: linewidth, axis: "0 0 0 0", symbol: "", colors:c.length==y.length?c:null, gutter:0.001});
 		    }
-		    var sy=Math.floor((g.h)/20), sx=24;
-		    if(ey[0]<ey[1]){
-			var ay=r.g.smart_axis(g.x, g.y+g.h, g.h, ey[0], ey[1], sy, 1);
-			//ag.axis.push(ay);
-		    }
+		    
+		    var sx=12;
+		    var ay=r.g.smart_axis(g.x, g.y+g.h, g.h, y, 1);
+		    
 		    var date_labels=date.smart_gen_interp(interval[0], interval[1], sx);
-		    var ax=r.g.smart_axis(g.x, g.y+g.h, g.w, 0, 24, sx, 0, date_labels);
-		    //ag.axis.push(ax);
+		    var ax=r.g.smart_axis(g.x, g.y+g.h, g.w, [0, sx], 0, 't', sx, date_labels);
+		    ag.axis.push(ax, ay);
 		    var pline_style={stroke:'#000','stroke-dasharray':'-','stroke-linecap':'butt','stroke-opacity':0.5};
 		    
 		    r.g.picker(g.x, g.y, g.w, g.h, [date.parse(interval[0]), date.parse(interval[1])], ey, 
