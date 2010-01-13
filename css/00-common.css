@@ -128,7 +128,7 @@ div#graph {
 div#diagram {
               position: relative;
               float: left;
-              width: 80%;
+              width: 90%;
               height: 100%;
               }
 
@@ -136,7 +136,9 @@ div#legend {
              position: relative;
              padding: 20px;
              float: right;
-             width: 10%;
+             width: 4%;
+             margin-right: 20px;
+             margin-left: -60px;
              height: 100%;
              vertical-align: middle;
              text-align: left;

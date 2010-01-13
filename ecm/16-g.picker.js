@@ -17,7 +17,7 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
   opt.plines=opt.plines||{x:{},y:{}};
   opt.popup=opt.popup||'none'; //blob,
   opt.popup_delay=typeof opt.popup_delay=='number'?opt.popup_delay:1000;
-  
+
   var p=r.set();
   if(opt.plines.x){
     p.xline=r.path('');
@@ -32,14 +32,16 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
 
   p.area=r.rect(gx, gy, gw, gh).attr({'fill':'#000','fill-opacity':0.0,'stroke':'none'});
   p.hide();
-  
+
   var popup={
     show:function(x, y, t){
       if(opt.popup=='none')return;
       if(typeof t=='string'){
-	popup.hide();
-	popup.timer=setTimeout(popup.show, opt.popup_delay);
-	popup.args={x:x, y:y, t:t};
+	if(t.match(/undefined/)!='undefined'){
+	  popup.hide();
+	  popup.timer=setTimeout(popup.show, opt.popup_delay);
+	  popup.args={x:x, y:y, t:t};
+	}
       }else{
 	var a=popup.args;
 	popup.object=r.g[opt.popup](a.x, a.y-2, a.t);
@@ -58,18 +60,18 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
       }
     }
   };
-  
-  var outevt=$.browser=='opera'?function(cx, cy){ /* fucked opera :-[ */
+    /*
+  var outevt=$.browser=='opera'?function(cx, cy){ // fucked opera :-[
       if(!(cx>=gx&&cx<gx+gw&&cy>=gy&&cy<gy+gh))$a.trigger('mouseleave');
   }:function(){};
-  
+  */
   var $a=$(p.area.node)
   .mouseenter(function(){
 	  p.xline.show();
 	  p.xline.toFront();
 	  p.yline.show();
 	  p.yline.toFront();
-	  
+
 	  p.area.toFront();
       })
   .mouseleave(function(){
@@ -85,8 +87,8 @@ Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
 		 /* update popup */
 		 var v={x:(c.x-gx)*(ex[1]-ex[0])/gw+ex[0], y:ey[1]-(c.y-gy)*(ey[1]-ey[0])/gh};
 		 popup.show(c.x, c.y, opt.format(v, {x:ex, y:ey}));
-		 outevt(c.x, c.y);
+		 //outevt(c.x, c.y);
 	       });
-  
+
   return p;
 };

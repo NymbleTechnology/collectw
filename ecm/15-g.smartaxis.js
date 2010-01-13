@@ -19,7 +19,7 @@
     return e;
   };
   var short_label=$.short_number;
-  var upof=function(ev, l){
+  var upof=function(ev, l, s){
       ev.push(ev[1]-ev[0]);
       var m=Number(ev[2]).toExponential(0).toString().split('e');
       for(var i=0;i<2;i++)m[i]=parseInt(m[i], 10);
@@ -34,25 +34,26 @@
       rv.l=(ev[1]-rv.e[1])*rv.p+rv.c;// calc length
       // calc num of steps
       for(rv.s=rv.u[2];rv.s<5;rv.s*=2){}
+      for(;rv.s*s>l;rv.s=Math.round(rv.s/2));
       return rv;
   };
-  
-  var axis=function (x, y, length, values, orientation, label, steps, labels, type, dashsize) {
-      var r=this, ev=edges(values), line=[[x,y]];
-      
+
+   var axis=function (x, y, length, from, to, orientation, label, steps, labels, type, dashsize) {
+      var r=this, ev=[from, to], line=[[x,y]];
+
       if(typeof orientation!='number')orientation=0;
-      
+
       switch(orientation){
-      case 0: line.push([+length,]); break;
+      case 0: line.push([+length,0]); break;
       case 1: line.push([0,-length]); break;
       case 2: line.push([-length,0]); break;
       case 3: line.push([0,+length]); break;
       }
       line[1][0]+=line[0][0]; line[1][1]+=line[0][1];
       var axis='M'+line[0][0]+' '+line[0][1]+'L'+line[1][0]+' '+line[1][1];
-      
+
       if(!steps){
-	  var rv=upof(ev, length);
+	  var rv=upof(ev, length, (orientation%2)?40:20);
 	  steps=rv.s;
 	  if(!labels){
 	      labels=[];
@@ -67,13 +68,13 @@
 	  }
 	  length-=rv.l;
       }
-      
+
       var res;
-      
+
       if(ev[0]<ev[1]){
 	  res=r.g.axis(x, y, length, ev[0], ev[1], steps, orientation, labels, type, dashsize);
 	  res.attr({path:res.attr('path')+axis});
-	  
+
 	  res.remove = function () {
 	      this.text.remove();
 	      this.line.remove();
@@ -82,14 +83,14 @@
       }else{
 	  res=r.path(axis);
       }
-      
+
       if(label){
-	  
+
       }
-      
+
       return res;
   }
-  
+
   Raphael.fn.g.axis_edges=edges;
   Raphael.fn.g.smart_axis=axis;
 })();

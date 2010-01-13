@@ -27,9 +27,9 @@
   };
   var R=function(v, r){
     //if(r===undefined)return v;
-    r=Math.pow(10, r||0);
+    r=Math.pow(10, r||1);
     return Math.round(v*r)/r;
-  }
+  };
   $.short_number=function(v, r){
     if(v>=0&&v<1e-24)return '0';
     if(v>=1e24)return '∞';
