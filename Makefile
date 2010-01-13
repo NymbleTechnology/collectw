@@ -89,6 +89,8 @@ $(html-object):
 	@{ $(call add-doctype) echo '<html><head>'; $(call add-contype) } > $@
 ifdef --demo-mode
 	@{ $(call add-inline-ecm,var demo_mode=true;) } >> $@
+else
+	@{ $(call add-inline-ecm,var demo_mode=false;) } >> $@
 endif
 ifdef --devel-mode
 	@{ $(foreach f,$(css-sources),$(call add-css,$(f))) } >> $@
