@@ -83,7 +83,7 @@ $(function(){
 		    r.g.picker(g.x, g.y, g.w, g.h, [date.parse(interval[0]), date.parse(interval[1])], ey,
 			       {holder:dia, popup:'popup', plines:{x:pline_style,y:pline_style}, gutter:0, format:function(v, e){
 				  var d=date.tostr(Math.round(v.x)).split('_');
-				  return $.short_number(v.y, 2)+' at '+d[1]+'\n'+d[0];
+				  return r.g.short_number(v.y, 2)+' at '+d[1]+'\n'+d[0];
 			     }});
 
 		    leg.nodes
@@ -104,7 +104,7 @@ $(function(){
 			    });
 		    b.stop().remove();
 		}, 100);
-	}
+    };
 
 	$.fn.legend=function(title, labels, colors){
 	    colors=colors&&colors.length>=labels.length?colors:Raphael.fn.g.colors;

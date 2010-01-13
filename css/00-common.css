@@ -151,12 +151,10 @@ div#legend > #title {
                      }
 
 div#legend > div{
-                  /*border: solid transparent 2px;*/
                   cursor: pointer;
                   font-weight: normal;
                   }
 div#legend > div.hover{
-                        /*border-width: 3px;*/
                         font-weight: bold;
                         }
 
