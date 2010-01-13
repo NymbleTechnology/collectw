@@ -140,6 +140,7 @@ $(function(){
 		/* send query */
 		range[1]=date.tostr(date.parse(range[1])+(60*60*24));
 		$.getJSON(json_url('data:'+'['+range.join(',')+']'+'{'+elems.join(',')+'}'), function(json){
+			if(!json)return;
 			stat.text('Rendering view "'+view_title+'" ..');
 			view.empty();
 
