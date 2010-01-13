@@ -51,11 +51,13 @@
 
    Raphael.fn.g.short_number=number.smart_short;
 
-   Raphael.fn.g.axis_edges=function(d, e){
+   Raphael.fn.g.smart_edges=function(d, e){
      if(typeof d=='undefined'){
      }else if(typeof d=='number'){
-       (typeof e=='undefined') && (e=[d, d]);
-       (d<e[0]) && (e[0]=d); (d>e[1]) && (e[1]=d);
+       if(!isNaN(d)){
+	 (typeof e=='undefined') && (e=[d, d]);
+	 (d<e[0]) && (e[0]=d); (d>e[1]) && (e[1]=d);
+       }
      }else{
        for(var i in d){
 	 e=arguments.callee(d[i], e);
@@ -98,7 +100,7 @@
      var axis='M'+line[0][0]+' '+line[0][1]+'L'+line[1][0]+' '+line[1][1];
 
      if(!steps){
-       var rv=upof(ev, length, (orientation%2)?40:20);
+       var rv=upof(ev, length, (orientation%2)?20:10);
        steps=rv.s;
        if(!labels){
 	 labels=[];
@@ -136,7 +138,74 @@
      return res;
    };
 
-   Raphael.fn.g.picker=function(gx, gy, gw, gh, ex, ey, opt){
+   Raphael.fn.g.smart_line=function(gx, gy, gw, gh, vx, vy, ex, ey, opt){
+     var r=this, lines=r.set(), areas=r.set(), dx=ex[1]-ex[0], dy=ey[1]-ey[0], sx=gw/dx, sy=gh/dy, px=ex[0], py=ey[0];
+     var opt=opt||{};
+     opt.colors=opt.colors||Raphael.fn.g.colors;
+     opt.width=opt.width||1;
+     opt.fillopacity=typeof opt.fillopacity=='number'?opt.fillopacity:0.5;
+
+     if(!vx && vy && vy.length){
+       vx=[];
+       for(var g=0;g<vy.length;g++){
+	 var y=vy[g], x=[], l;
+	 if(y.avg)y=y.avg;
+	 l=y.length;
+	 for(var i=0;i<l;i++){
+	   x.push(px+i*dx/l);
+	 }
+	 vx.push(x);
+       }
+     }
+
+     if(typeof vx[0]=='number'){
+       var ox=x; vx=[];
+       for(var g=0;g<vy.length;g++)vx.push(ox);
+     }
+
+     for(var g=0;g<vy.length;g++){
+       var x=vx[g], y=vy[g], i, c=false, line='', area='';
+       if(y.avg)y=y.avg;
+       for(i=0;i<y.length;i++){
+	 if(isNaN(y[i])){
+	   c=false;
+	   continue;
+	 }
+	 line+=(c?'L':'M')+(gx+(x[i]-px)*sx)+' '+(gy+(py-y[i])*sy+gh)+' ';
+	 c=true;
+       }
+
+       lines.push(r.path(line).attr({'stroke-width':opt.width, 'stroke':opt.colors[g]}));
+       y=vy[g];
+       if(y.max && y.min){
+	 var min='', max='';
+	 c=false;
+	 for(i=0;i<y.avg.length;i++){
+	   if(isNaN(y.avg[i])){
+	     if(c){
+	       area+=min+max+'Z ';
+	       min='';
+	       max='';
+	     }
+	     c=false;
+	     continue;
+	   }
+	   min=min+(c?'L':'M')+(gx+(x[i]-px)*sx)+' '+(gy+(py-y.min[i])*sy+gh)+' ';
+	   max='L'+(gx+(x[i]-px)*sx)+' '+(gy+(py-y.max[i])*sy+gh)+' '+max;
+	   c=true;
+	 }
+	 area+=min+max+'Z ';
+	 areas.push(r.path(area).attr({'stroke':opt.colors[g], 'stroke-width':opt.width, 'fill':opt.colors[g], 'opacity':opt.fillopacity}));
+       }
+     }
+     var res=r.set();
+     res.push(lines, areas);
+     res.lines=lines;
+     res.areas=areas;
+     return res;
+   };
+
+   Raphael.fn.g.smart_pick=function(gx, gy, gw, gh, ex, ey, opt){
      var r=this;
      ex=ex.length==2?ex:[0.0,1.0],
      ey=ey.length==2?ey:[0.0,1.0],
