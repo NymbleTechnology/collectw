@@ -41,10 +41,22 @@ $(function(){
 
     var draw=function(ctx, title, interval, conf){
       var gutter=10, linewidth=2, hoverlinewidth=3, fillopacity=0.2, hoverfillopacity=0.4;
-	    var x=[], y=[], l=[], c=[];
+      var x=[], y=[], l=[], c=[], z=[];
 
 	    for(var name in conf){
 	      var d=conf[name].data;
+	      /* calc time edges */
+	      if(z==undefined){
+		z=Math.round(d.avg.length/2);
+		z=[z,z];
+	      }
+	      for(var i=0;i<d.avg.length;i++){
+		if(isNaN(d.avg[i])){
+		  (z[0]>i) && (z[0]=i);
+		  (z[1]<i) && (z[1]=i);
+		}
+	      }
+	      /* fill y array */
 	      y.push(d);
 	      l.push(conf[name].title);
 	      conf[name].color && c.push(conf[name].color);
