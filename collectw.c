@@ -168,17 +168,40 @@ int collectw_info(Stream stream, const char **param){
   return _collectw_info(stream, collectw_rrd_basedir);
 }
 
+static int collectw_output_value(Stream stream, rrd_value_t *value){
+#ifdef ZERO_INSTEAD_OF_NAN_AND_INF
+  if(isnan(*value) || isinf(*value)){
+    FPrintF(stream, "0");
+  }else{
+    FPrintF(stream, "%g", *value);
+  }
+#else
+  if(isnan(*value)){
+    FPrintF(stream, "NaN");
+  }else{
+    if(isinf(*value)){
+      FPrintF(stream, "%sInfinity", signbit(*value)?"-":"");
+    }else{
+      FPrintF(stream, "%g", *value);
+    }
+  }
+#endif
+}
+
 static int _collectw_data(Stream stream,
 			  const char *path,
 			  const char *ds,
 			  const char *type,
 			  time_t *from,
 			  time_t *to,
-			  unsigned long *step){
+			  unsigned long *step,
+			  rrd_value_t *min,
+			  rrd_value_t *max){
   char fullpath[strlen(collectw_rrd_basedir)+strlen(path)+1+strlen(RRD_EXT)+1];
   unsigned long ds_cnt=0, l, n, i;
   char **ds_name, k=0;
   rrd_value_t *data;
+  rrd_value_t *value;
   
   fullpath[0]='\0';
   strcat(fullpath, collectw_rrd_basedir);
@@ -189,7 +212,7 @@ static int _collectw_data(Stream stream,
   if(rrd_fetch_r(fullpath, type, from, to, step, &ds_cnt, &ds_name, &data)){
     //ERROR(rrd_get_error());
     //FPrintF(stream, "[]");
-    FPrintF(stream, "[\"%s\"]", rrd_get_error());
+    FPrintF(stream, "\"%s\"", rrd_get_error());
     return 4;
   }
   
@@ -204,24 +227,14 @@ static int _collectw_data(Stream stream,
     FPrintF(stream, "[");
     
     for(n=0;n<l;n++){
+      value=data+n*ds_cnt+i;
       n && FPrintF(stream, ",");
-#ifdef ZERO_INSTEAD_OF_NAN_AND_INF
-      if(isnan(data[n*ds_cnt+i]) || isinf(data[n*ds_cnt+i])){
-	FPrintF(stream, "0");
-      }else{
-	FPrintF(stream, "%g", data[n*ds_cnt+i]);
+      collectw_output_value(stream, value);
+      /* calc max and min values */
+      if(!isnan(*value)){
+	if(isnan(*min) || *min>*value)*min=*value;
+	if(isnan(*max) || *max<*value)*max=*value;
       }
-#else
-      if(isnan(data[n*ds_cnt+i])){
-	FPrintF(stream, "NaN");
-      }else{
-	if(isinf(data[n*ds_cnt+i])){
-	  FPrintF(stream, "%sInfinity", signbit(data[n*ds_cnt+i])?"-":"");
-	}else{
-	  FPrintF(stream, "%g", data[n*ds_cnt+i]);
-	}
-      }
-#endif
     }
     
     FPrintF(stream, "]");
@@ -242,9 +255,11 @@ static int _collectw_data(Stream stream,
 
 int collectw_data(Stream stream, const char **param){
   const char *types[]={"AVERAGE", "MIN", "MAX", NULL};
+  const char *return_types[]={"avg", "min", "max", NULL};
   unsigned long stepping=1, step;
   const char *d;
   time_t start, end, from, to;
+  rrd_value_t min, max;
   
   {
     struct tm t;
@@ -283,16 +298,25 @@ int collectw_data(Stream stream, const char **param){
 	val="value";
       }
       
+      min=NAN; max=NAN;
+      
       key==elements || FPrintF(stream, ",");
-      FPrintF(stream, "[");
+      FPrintF(stream, "{");
       
       for(t=0; types[t]; t++){
 	t && FPrintF(stream, ",");
+	FPrintF(stream, "%s:", return_types[t]);
 	from=start; to=end; step=stepping;
-	_collectw_data(stream, key, val, types[t], &from, &to, &step);
+	_collectw_data(stream, key, val, types[t], &from, &to, &step, &min, &max);
       }
       
+      FPrintF(stream, ",lim:[");
+      collectw_output_value(stream, &min);
+      FPrintF(stream, ",");
+      collectw_output_value(stream, &max);
       FPrintF(stream, "]");
+      
+      FPrintF(stream, "}");
     }
   }
   FPrintF(stream, "]");

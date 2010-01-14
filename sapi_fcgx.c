@@ -149,7 +149,7 @@ main(int argc, char **argv){
     sigset_t sigset;
     
     regmatch_t match[max_n];
-    unsigned char n,l;
+    unsigned int n,l;
     char *param[max_n];
     
     for(n=0;n<max_n;n++)param[n]=NULL;

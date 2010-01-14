@@ -41,7 +41,7 @@ $(function(){
 
     var draw=function(ctx, title, interval, conf){
       var gutter=10, linewidth=2, hoverlinewidth=3, fillopacity=0.2, hoverfillopacity=0.4;
-      var x=[], y=[], l=[], c=[], z=[];
+      var x=[], y=[], l=[], c=[], z=[], ex=[date.parse(interval[0]), date.parse(interval[1])], ey;
 
 	    for(var name in conf){
 	      var d=conf[name].data;
@@ -58,19 +58,22 @@ $(function(){
 		}
 	      }
 	      */
+	      if(!ey)ey=d.lim;
+	      else{
+		  (ey[0]>d.lim[0]) && (ey[0]=d.lim[0]);
+		  (ey[1]<d.lim[1]) && (ey[1]=d.lim[1]);
+	      }
 	      /* fill y array */
 	      y.push(d);
 	      l.push(conf[name].title);
 	      conf[name].color && c.push(conf[name].color);
 	    }
-
+      
 	    ctx.append('<div id="diagram">').append('<div id="legend">');
 	    var dia=ctx.find('div#diagram'), leg=ctx.find('div#legend');
 	    var r=Raphael(dia.get(0));
 
 	    r.g.txtattr.font="10px 'Fontin Sans', Fontin-Sans, sans-serif";
-
-	    var ex=[date.parse(interval[0]), date.parse(interval[1])], ey=r.g.smart_edges(y);
 
 	    var g={x:40,y:40,w:dia.innerWidth()-80,h:dia.innerHeight()-60};
 
@@ -78,6 +81,9 @@ $(function(){
 
 	    var b=r.spinner(g.x+g.w/2, g.y+g.h/2, 20, 30, 12, 8, '#000').start();
 
+      if(ex[0]==ex[1]||ey[0]==ey[1]){
+	  stat.text('Data not present..');
+      }else{
 	    setTimeout(function(){
 		    var ag=r.g.smart_line(g.x, g.y, g.w, g.h, false, y, ex, ey, {width:linewidth, fillopacity:fillopacity, colors:c.length==y.length?c:null});
 		    ag.axis=r.set();
@@ -117,6 +123,7 @@ $(function(){
 			    });
 		    b.stop().remove();
 		}, 100);
+      }
     };
 
 	$.fn.legend=function(title, labels, colors){
@@ -162,8 +169,7 @@ $(function(){
 			    var lines=graphs[graph_title];
 
 			    for(var line_id in lines){
-				var e=json[i];
-				lines[line_id].data={avg:e[0],min:e[1],max:e[2]};
+				lines[line_id].data=json[i];
 				i++;
 			    }
 
