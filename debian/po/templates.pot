@@ -1,0 +1,89 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: collectw@packages.debian.org\n"
+"POT-Creation-Date: 2010-01-14 12:57+0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: title
+#. Description
+#: ../collectw.templates:1001
+msgid "Configuring CollectW"
+msgstr ""
+
+#. Type: title
+#. Description
+#: ../collectw.templates:2001
+msgid "CollectW configured successfully!"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../collectw.templates:3001
+msgid "Web UI host:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../collectw.templates:3001
+msgid "Leave field blank for accessing with any host."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../collectw.templates:4001
+msgid "Web UI port:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../collectw.templates:4001
+msgid "40011 port by default."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../collectw.templates:5001
+msgid "An admin user for web UI:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../collectw.templates:5001
+msgid "Username for web access."
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../collectw.templates:6001
+msgid "A password for web UI:"
+msgstr ""
+
+#. Type: string
+#. Description
+#: ../collectw.templates:6001
+msgid "Password of user which have access."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../collectw.templates:7001
+msgid "You can see collectd's statistics on ${location}."
+msgstr ""
+
+#. Type: note
+#. Description
+#: ../collectw.templates:7001
+msgid "Also you may edit ${userconf} for more advanced usage."
+msgstr ""
