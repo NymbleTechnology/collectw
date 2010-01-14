@@ -71,6 +71,7 @@ main(int argc, char **argv){
   }
   
   fprintf(stderr, "Initializing..\n");
+  fflush(stderr);
   /* Init collectw */
   if(collectw_init(rrddir, config)) exit(2);
   
@@ -164,6 +165,7 @@ main(int argc, char **argv){
     
     if(!setjmp(jmp_mark)){
       fprintf(stderr, "Running main cicle..\n");
+      fflush(stderr);
       for(;;){
 	TRY( FCGX_Accept_r(&request) );
 	raw_query=FCGX_GetParam("QUERY_STRING", request.envp);
@@ -174,6 +176,7 @@ main(int argc, char **argv){
 	if(raw_query){
 	  query=url_decode(raw_query);
 	  fprintf(stderr, "Processing query: %s ..\n", query);
+	  fflush(stderr);
 #ifdef DEBUG
 	  // url schema: collectw?env
 	  if(strstr(query, "env")){
@@ -186,7 +189,7 @@ main(int argc, char **argv){
 	      if(!reque[i].cb)continue;
 	      if(REG_NOMATCH==regexec(reque[i].pg, query, max_n, match, 0))continue;
 	      fprintf(stderr, "Request: %s ..\n", reque[i].re);
-	      
+	      fflush(stderr);
 	      /* Fill params */
 	      for(n=0;reque[i].rs[n]!='/';n++){
 		//fprintf(stderr, "Found subst: %d\n", n);
