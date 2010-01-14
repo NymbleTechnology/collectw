@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 # Source debconf library.
 PATH=$PATH:.
@@ -22,11 +22,12 @@ db_get collectw/http_port && port="$RET"
 
 # make default user config
 hn="$(hostname)"
-etc_dir="/etc/collectw"
-etc_cnf="$etc_dir/$target"
+etc_dir="/etc/$target"
+etc_cnf="$etc_dir/user-config.json"
 
 [ -f "$etc_cnf" ] || {
-  mkdir -p "$etc_dir"
+  echo Creating default user config.. >&2
+  [ -d "$etc_dir" ] || mkdir -p "$etc_dir"
   {
     echo "{"
     echo "  'Default View':{"
@@ -48,6 +49,7 @@ etc_cnf="$etc_dir/$target"
 
 # Automatically added by dh_installinit
 if [ -x "/etc/init.d/collectw" ]; then
+	echo Registering $target service.. >&2
         update-rc.d collectw defaults >/dev/null
         if [ -n "$2" ]; then
                 _dh_action=restart
@@ -55,9 +57,9 @@ if [ -x "/etc/init.d/collectw" ]; then
                 _dh_action=start
         fi
         if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-                invoke-rc.d collectw $_dh_action || exit $?
+                invoke-rc.d $target $_dh_action || true #exit $?
         else
-                /etc/init.d/collectw $_dh_action || exit $?
+                /etc/init.d/$target $_dh_action || true #exit $?
         fi
 fi
 # End automatically added section
@@ -67,6 +69,7 @@ fi
 [ -d "$ngx_avl" ] && {
   nginx_need_reload=0
   [ -e "$ngx_avl/$target" ] || {
+    echo Creating $target site config.. >&2
     echo "# CollectW server config.."
     echo "server {"
     [ -n "$port" ] && echo '  listen '"$port"';'
@@ -88,6 +91,7 @@ fi
 
   [ -d "$ngx_enb" ] && {
     [ -e "$ngx_enb/$target" ] || {
+      echo Enabling $target site.. >&2
       ln -s "$ngx_avl/$target" "$ngx_enb/$target"
       nginx_need_reload=1
     }
@@ -96,9 +100,9 @@ fi
   # reload nginx
   if [ -x "/etc/init.d/nginx" -a "$nginx_need_reload" = "1" ]; then
     if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-      invoke-rc.d nginx reload || exit $?
+      invoke-rc.d nginx reload || true #exit $?
     else
-      /etc/init.d/nginx reload || exit $?
+      /etc/init.d/nginx reload || true #exit $?
     fi
   fi
 }
@@ -113,4 +117,6 @@ db_subst collectw/config_success userconf "$etc_cnf"
 db_input high collectw/config_success
 db_go || true
 
-#db_stop
+db_stop
+
+exit 0

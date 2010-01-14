@@ -5,7 +5,6 @@ clean::
 	dh_clean
 	rm -f stamp/*
 	rm -f debian/collectw.substvars
-	touch $@
 
 .PHONY: build install clean
 .PRECIOUS:
