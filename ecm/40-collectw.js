@@ -46,6 +46,7 @@ $(function(){
 	    for(var name in conf){
 	      var d=conf[name].data;
 	      /* calc time edges */
+	      /*
 	      if(z==undefined){
 		z=Math.round(d.avg.length/2);
 		z=[z,z];
@@ -56,6 +57,7 @@ $(function(){
 		  (z[1]<i) && (z[1]=i);
 		}
 	      }
+	      */
 	      /* fill y array */
 	      y.push(d);
 	      l.push(conf[name].title);
