@@ -8,7 +8,7 @@ Homepage: http://collectw.sf.net
 
 Package: collectw
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends} collectd
+Depends: ${shlibs:Depends}, ${misc:Depends}, collectd
 Description: Asynchronous Web-based UI for Collectd.
   .
 
