@@ -136,7 +136,7 @@ ifdef --devel-mode
 	@[ -d $(--nginx-cfg-dir) ] && { ln -s "$(CURDIR)/$(nginx-config)" $(--nginx-cfg-dir)/sites-available/$(target); ln -s $(--nginx-cfg-dir)/sites-available/$(target) $(--nginx-cfg-dir)/sites-enabled/$(target); }
 else
 	@install -m 755 $(target) $(bin-exec)
-	@install -m 644 $(webcont) $(www-data)
+	@install -m 644 $(webcont) icon.png $(www-data)
 endif
 
 uninstall:
