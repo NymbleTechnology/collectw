@@ -101,10 +101,21 @@
 
   var upof=function(ev, l, s){
     ev.push(ev[1]-ev[0]);
-    var m=Number(ev[2]).toExponential(0).toString().split('e');
-    for(var i=0;i<2;i++)m[i]=parseInt(m[i], 10);
+    var m=Number(ev[2]).toExponential(0).toString().split('e'), i;
+    for(i=0;i<2;i++)m[i]=parseInt(m[i], 10);
     if(m[0]<5)m[1]--; // fix for small delta
     var r=Math.pow(10, m[1]), rv={u:[Math.ceil(ev[0]/r),Math.floor(ev[1]/r)]};
+    // calc step size and num of steps; recalc initial value
+    var max_steps=Math.floor(l/s);
+    for(i in {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 8:0, 10:0}){
+      var steps=Math.floor((rv.u[1]-rv.u[0])/i);
+      if(steps<=max_steps){
+        rv.u[0]=rv.u[1]-i*steps;
+        rv.s=steps;
+        break;
+      }
+    }
+    // post calc
     rv.e=[rv.u[0]*r, rv.u[1]*r];
     rv.u.push(rv.u[1]-rv.u[0]);
     rv.e.push(rv.e[1]-rv.e[0]);
@@ -112,10 +123,7 @@
     rv.p=l/ev[2];// calc num of pixels per delta value
     rv.c=(rv.e[0]-ev[0])*rv.p;// calc coord
     rv.l=(ev[1]-rv.e[1])*rv.p+rv.c;// calc length
-    // calc num of steps
-    for(rv.s=rv.u[2];rv.s<5;rv.s*=2){}
-    //for(;rv.s>10;rv.s=Math.round(rv.s/2)){}
-    for(;rv.s*s>l;rv.s=Math.round(rv.s/2));
+    
     return rv;
   };
 
@@ -134,7 +142,7 @@
     var axis='M'+line[0][0]+' '+line[0][1]+'L'+line[1][0]+' '+line[1][1];
 
     if(!steps){
-      var rv=upof(ev, length, (orientation%2)?30:20);
+      var rv=upof(ev, length, (orientation%2)?40:20);
       steps=rv.s;
       if(!labels){
 	labels=[];
