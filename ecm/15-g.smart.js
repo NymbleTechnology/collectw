@@ -110,6 +110,7 @@
     for(i in {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 8:0, 10:0}){
       var steps=Math.floor((rv.u[1]-rv.u[0])/i);
       if(steps<=max_steps){
+	(steps<=0) && (steps=1);
         rv.u[0]=rv.u[1]-i*steps;
         rv.s=steps;
         break;
@@ -129,9 +130,9 @@
 
   Raphael.fn.g.smart_axis=function (x, y, length, from, to, orientation, label, steps, labels, type, dashsize) {
     var r=this, ev=[from, to], line=[[x,y]];
-
+    
     if(typeof orientation!='number')orientation=0;
-
+    
     switch(orientation){
      case 0: line.push([+length,0]); break;
      case 1: line.push([0,-length]); break;
@@ -140,7 +141,7 @@
     }
     line[1][0]+=line[0][0]; line[1][1]+=line[0][1];
     var axis='M'+line[0][0]+' '+line[0][1]+'L'+line[1][0]+' '+line[1][1];
-
+    
     if(!steps){
       var rv=upof(ev, length, (orientation%2)?40:20);
       steps=rv.s;
@@ -157,9 +158,9 @@
       }
       length-=rv.l;
     }
-
+    
     var res;
-
+    
     if(ev[0]<ev[1]){
       res=r.g.axis(x, y, length, ev[0], ev[1], steps, orientation, labels, type, dashsize);
       res.attr({path:res.attr('path')+axis});
@@ -174,7 +175,7 @@
     }
 
     if(label){
-
+	
     }
 
     return res;
