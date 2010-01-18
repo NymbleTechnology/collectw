@@ -76,6 +76,7 @@ add-ecm=echo '<script type="text/javascript" src="$(1)"></script>';
 add-inline-ecm=echo '<script type="text/javascript">$(1)</script>';
 add-css=echo '<link rel="stylesheet" href="$(1)" type="text/css" />';
 add-div=echo '<div id="$(1)">$(2)</div>';
+add-ico=echo '<link rel="icon" type="image/png" href="$(1)" />';
 
 all: $(target) $(webcont) $(site-config)
 
@@ -87,6 +88,7 @@ $(target): $(objects)
 
 $(html-object):
 	@{ $(call add-doctype) echo '<html><head>'; $(call add-contype) } > $@
+	@{ $(call add-ico,icon.png) } >> $@
 ifdef --demo-mode
 	@{ $(call add-inline-ecm,var demo_mode=true;) } >> $@
 else
