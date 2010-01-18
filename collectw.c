@@ -258,8 +258,10 @@ int collectw_data(Stream stream, const char **param){
   const char *return_types[]={"avg", "min", "max", NULL};
   unsigned long stepping=1, step;
   const char *d;
-  time_t start, end, from, to;
+  time_t start, end, from, to, now;
   rrd_value_t min, max;
+  
+  now=time(&now);
   
   {
     struct tm t;
