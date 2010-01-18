@@ -8,6 +8,9 @@ else
   . /usr/share/debconf/confmodule
 fi
 
+target="collectw"
+ngx_avl="/etc/nginx/sites-available"
+
 # Automatically added by dh_installinit
 if [ "$1" = "purge" ] ; then
 	# purging debconf data
@@ -15,6 +18,8 @@ if [ "$1" = "purge" ] ; then
         db_purge || true
 	echo Removing service.. >&2
         update-rc.d collectw remove >/dev/null || true #exit $?
+	echo Removing nginx config..
+	[ -f $ngx_avl/$target ] && rm -f $ngx_avl/$target
 fi
 # End automatically added section
 
