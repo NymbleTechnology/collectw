@@ -218,13 +218,13 @@ static int _collectw_data(Stream stream,
   
   l = (*to-*from) / *step;
   
+  FPrintF(stream, "[");
+  
   for(i=0;i<ds_cnt;i++) {
     if(!ds || !strlen(ds) || strcmp(ds, ds_name[i])){
       free(ds_name[i]);
       continue;
     }
-    
-    FPrintF(stream, "[");
     
     for(n=0;n<l;n++){
       value=data+n*ds_cnt+i;
@@ -237,10 +237,10 @@ static int _collectw_data(Stream stream,
       }
     }
     
-    FPrintF(stream, "]");
-    
     free(ds_name[i]);
   }
+  
+  FPrintF(stream, "]");
   
   free(ds_name);
   free(data);
