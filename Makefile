@@ -150,3 +150,13 @@ endif
 .PHONY: check clean install uninstall
 
 endif
+
+debian-binary:
+	dpkg-buildpackage -b
+
+debian-source:
+	[ -d .git ] && mv .git ../
+	dpkg-buildpackage -S
+	[ -d ../.git ] && mv ../.git ./
+
+debian: debian-source debian-binary

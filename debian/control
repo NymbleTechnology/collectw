@@ -6,11 +6,16 @@ Build-Depends: debhelper (>= 7), po-debconf, librrd-dev, libfcgi-dev
 Standards-Version: 3.8.2
 Homepage: http://collectw.sf.net
 
+Package: collectw-data
+Architecture: all
+Description: Asynchronous Web-based UI for Collectd.
+  Web data.
+
 Package: collectw
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, collectd
+Depends: ${shlibs:Depends}, collectd, collectw-data
 Description: Asynchronous Web-based UI for Collectd.
-  .
+  FastCGI interface.
 
 Package: collectw-dbg
 Section: debug
@@ -18,4 +23,4 @@ Recommends: gdb
 Architecture: any
 Depends: collectw (= ${Source-Version})
 Description: Debug symbols for Asynchronous Web-based UI for Collectd.
-  .
+  Debug data.

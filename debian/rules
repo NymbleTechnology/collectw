@@ -3,41 +3,43 @@
 clean::
 	make clean
 	dh_clean
-	rm -f stamp/*
+	rm -f build-stamp
 	rm -f debian/collectw.substvars
 
 .PHONY: build install clean
 .PRECIOUS:
 
-build:
+
+build-stamp:
 	./configure --prefix=debian/collectw/usr --enable-debug --with-user-config=/etc/collectw/user-config.json
 	make
+	touch $@
 
-install: build
+build: build-stamp
+
+install:
 	dh_testdir
 	dh_testroot
+	#dh_clean -k
 	dh_prep
 	dh_installdirs
 	
-	make install
-
-proper:
-	dh_clean
-
-binary-arch: proper build install
+	cp collectw debian/collectw/usr/bin
+	cp index.html script.js style.css icon.png debian/collectw-data/usr/share/collectw
+	
+binary: build install
 	dh_testdir
 	dh_testroot
-	dh_installinit --name=collectw --restart-after-upgrade
+	dh_installinit -n
 	dh_strip --dbg-package=collectw-dbg
-	dh_installchangelogs
-	dh_installdocs
-	dh_installdebconf -n
-	dh_compress
+	dh_installdebconf -n -pcollectw
+	dh_installchangelogs -i
+	dh_installdocs -i
+	dh_installdocs -a --link-doc=collectw-data
+	dh_compress -i
 	dh_fixperms
-	dh_installdeb
+	dh_installdeb -pcollectw
 	dh_shlibdeps
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
-
-binary: binary-arch
