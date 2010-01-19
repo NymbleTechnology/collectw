@@ -107,7 +107,7 @@
     var r=Math.pow(10, m[1]), rv={u:[Math.ceil(ev[0]/r),Math.floor(ev[1]/r)]};
     // calc step size and num of steps; recalc initial value
     var max_steps=Math.floor(l/s);
-    for(i in {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 8:0, 10:0}){
+    for(i in {1:0, 2:0, 4:0, 5:0, 10:0, 15:0, 20:0, 25:0, 40:0, 60:0}){
       var steps=Math.floor((rv.u[1]-rv.u[0])/i);
       if(steps<=max_steps){
 	(steps<=0) && (steps=1);
