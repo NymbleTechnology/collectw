@@ -35,7 +35,9 @@ binary: build install
 	dh_installdebconf -n -pcollectw
 	dh_installchangelogs -i
 	dh_installdocs -i
-	dh_installdocs -a --link-doc=collectw-data
+	#dh_installdocs -a --link-doc=collectw-data
+	mkdir -p debian/collectw/usr/share/doc && ln -s collectw-data debian/collectw/usr/share/doc/collectw
+	mkdir -p debian/collectw-dbg/usr/share/doc && ln -s collectw-data debian/collectw-dbg/usr/share/doc/collectw-dbg
 	dh_compress -i
 	dh_fixperms
 	dh_installdeb -pcollectw
