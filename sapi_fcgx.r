@@ -11,5 +11,5 @@ LDFLAGS+=-lfcgi
 
 check-dep+=$(if\
  $(wildcard $(if $(--with-libfcgi-include-dir),$(--with-libfcgi-include-dir),/usr/include)/fcgiapp.h)\
- $(wildcard $(if $(--with-libfcgi-lib-dir),$(--with-libfcgi-lib-dir),/usr/include)/libfcgi.*)\
+ $(wildcard $(if $(--with-libfcgi-lib-dir),$(--with-libfcgi-lib-dir),/usr/lib)/libfcgi.*)\
 ,,libfcgi-dev)
