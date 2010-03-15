@@ -30,6 +30,14 @@
 #include<rrd.h>
 #include<math.h>
 
+#ifndef NAN
+#ifdef FP_NAN
+#define NAN FP_NAN
+#else
+#define NAN (nanf(""))
+#endif
+#endif
+
 #include"collectw.h"
 
 #define ERROR(message) {FPrintF(stream, "{status:false,message:\"%s\"}", message);return 3;}
