@@ -11,5 +11,5 @@ LDFLAGS+=-lrrd
 
 check-dep+=$(if\
  $(wildcard $(if $(--with-librrd-include-dir),$(--with-librrd-include-dir),/usr/include)/rrd.h)\
- $(wildcard $(if $(--with-librrd-lib-dir),$(--with-librrd-lib-dir),/usr/include)/librrd.*)\
+ $(wildcard $(if $(--with-librrd-lib-dir),$(--with-librrd-lib-dir),/usr/lib)/librrd.*)\
 ,,librrd-dev)
