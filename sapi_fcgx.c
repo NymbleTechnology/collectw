@@ -97,7 +97,7 @@ main(int argc, char **argv){
     // url schema: collectw?info
     {collectw_info, NULL, "^info$", "/"},
     // url schema: collectw?data:[DATE_FROM,DATE_TO]{PATH1:DS1,PATH2:DS2,...}
-    {collectw_data, NULL, "^data:\\[([-:_0-9]*),([-:_0-9]*)\\]\\{([-_,:/a-z0-9]*)\\}$", "~\0\1\2/"},
+    {collectw_data, NULL, "^data:\\[([-:_0-9]*),([-:_0-9]*)\\]\\{([-_,.:/a-z0-9]*)\\}$", "~\0\1\2/"},
     // [0-9]{4}-[0-9]{2}-[0-1][0-9] [0-1][0-9]:[0-5][0-9]:[0-5][0-9]
     {collectw_load, NULL, "^load$", "/"},
     {collectw_save, NULL, "^save:(.*$)", "~\0/"},
