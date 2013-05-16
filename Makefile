@@ -28,9 +28,9 @@ sources=$(wildcard *.c)
 objects=$(patsubst %.c,%.o,$(sources))
 
 html-object=index.html
-css-sources=$(wildcard css/*.css)
+css-sources=$(sort $(wildcard css/*.css))
 css-object=style.css
-ecm-sources=$(wildcard ecm/*.js)
+ecm-sources=$(sort $(wildcard ecm/*.js))
 ecm-object=script.js
 
 nginx-config=collectw.nginx
