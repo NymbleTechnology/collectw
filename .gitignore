@@ -1,0 +1,7 @@
+*.o
+collectw
+config
+collectw.nginx
+index.html
+script.js
+style.css

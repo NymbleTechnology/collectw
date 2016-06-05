@@ -49,6 +49,7 @@ include sapi_*.r
 include collectw.r
 include config
 
+CFLAGS+=-Wall -Wextra
 ifdef --enable-debug
 CFLAGS+=-g -D DEBUG=1
 endif
