@@ -6,5 +6,5 @@ set -x
     --web-dir=/var/www/html \
     --with-interface=fcgx \
     --with-fcgx-listen=127.0.0.1:7000 \
-    --with-rrd-basedir=/var/www/rrd \
+    --with-rrd-basedir=/var/lib/collectd/rrd/local/ \
     --with-user-config=/etc/collectw.json

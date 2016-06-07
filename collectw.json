@@ -1,0 +1,33 @@
+{
+    'CPU':{
+	'Core 0':{
+	    'cpu-0/cpu-system':{title:'System',color:'#4075c2'},
+	    'cpu-0/cpu-user':{title:'User',color:'#405a2f'}
+        },
+        'Core 1':{
+	    'cpu-1/cpu-system':{title:'System',color:'#8075c2'},
+	    'cpu-1/cpu-user':{title:'User',color:'#805a2f'}
+        },
+        'Core 2':{
+	    'cpu-2/cpu-system':{title:'System',color:'#c075c2'},
+	    'cpu-2/cpu-user':{title:'User',color:'#c05a2f'}
+        },
+        'Core 3':{
+	    'cpu-3/cpu-system':{title:'System',color:'#f075c2'},
+	    'cpu-3/cpu-user':{title:'User',color:'#f05a2f'}
+	}
+     },
+    'Memory':{
+        'Memory':{
+            'memory/memory-free':{title:'Free',color:'#bf5a2f'},
+            'memory/memory-used':{title:'Used',color:'#4075c2'},
+            'memory/memory-buffered':{title:'Buffered',color:'#a2bf2f'},
+            'memory/memory-cached':{title:'Cached',color:'#c7b25d'}
+        },
+        'Load':{
+            'load/load:shortterm':{title:'Short Term'},
+            'load/load:midterm':{title:'Medium Term'},
+            'load/load:longterm':{title:'Long Term'}
+        }
+    }
+}
