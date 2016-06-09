@@ -66,9 +66,6 @@
 
 static const char *rrd_basedir = COLLECTW_RRD_BASEDIR;
 static const char *user_config = COLLECTW_USER_CONFIG;
-static const char *rrd_ext = ".rrd";
-
-
 
 
 static char *make_abspath( const char *key, const char *ext )
@@ -713,7 +710,10 @@ int main( int argc, char *argv[] )
             break;
 
         case 'l':
-            if ( optarg ) { listen = optarg; }
+            if ( optarg )
+            {
+                listen = optarg;
+            }
             break;
 
         case 'b':
@@ -766,6 +766,10 @@ int main( int argc, char *argv[] )
             rrd_basedir = optarg;
         }
     }
+
+    syslog( LOG_INFO, "Listening to %s", listen );
+    syslog( LOG_INFO, "RRD files are in %s", rrd_basedir );
+    syslog( LOG_INFO, "Config file is %s", user_config );
 
     syslog( LOG_NOTICE, "Entering main loop" );
 
